@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 지상 통제 시스템
 
 ## GROUND CONTROL SYSTEM
@@ -57,3 +58,6 @@ python3 main.py
 ![설정 화면](example2.png)
 실행 화면
 ![실행 화면](example3.png)
+=======
+# 2025_NURA_GCS
+>>>>>>> 1d1278503d8f9292b74bce997c4defc1a12890ae
