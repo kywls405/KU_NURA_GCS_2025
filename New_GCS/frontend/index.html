@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rocket Telemetry Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="page-header">
+        <img src="CommunicationMark_Eng.jpg" alt="Kookmin University Logo" class="logo">
+        <img src="Asec_Symbol.png" alt="ASEC Logo" class="logo">
+    </header>
+
+    <main class="dashboard-grid">
+        <section class="widget position-widget">
+            <h2 class="widget-header">Current Position</h2>
+            <div class="widget-content blue-bordered">
+                <div class="position-data">
+                    <p><span class="label">Longitude</span><br><span class="desc">(Data from packet)° E</span></p>
+                    <p><span class="label">Latitude</span><br><span class="desc">(Data from packet)° N</span></p>
+                </div>
+                <div class="map-placeholder">MAP</div>
+            </div>
+        </section>
+
+        <div class="widget-row">
+            <section class="widget">
+                <h2 class="widget-header">Altitude</h2>
+                <div class="widget-content clean-box">
+                    <div class="chart-placeholder">
+                        <p><span class="label">Line Chart</span></p>
+                        <p class="desc">(Y Axis -> P_alt, Alt (These are from packet(separately, meter)</p>
+                        <p class="desc">X Axis -> Timestamp(change to sec))</p>
+                    </div>
+                    <p><span class="label">MAX Altitude</span> : <span class="desc">- (m)</span></p>
+                </div>
+            </section>
+            <section class="widget">
+                <h2 class="widget-header">Acceleration</h2>
+                <div class="widget-content clean-box">
+                    <div class="chart-placeholder">
+                        <p><span class="label">Line Chart</span></p>
+                        <p class="desc">(Y Axis -> ax, ay, az (These are from packet(separately)</p>
+                        <p class="desc">X Axis -> Timestamp(change to sec))</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section class="widget status-widget">
+            <h2 class="widget-header">Current Status</h2>
+            <div class="widget-content status-content-box">
+                <div class="status-main-area">
+                    <div class="navball">
+                        <span class="label">Navball</span><br><span class="desc">(roll-pitch-yaw status)</span>
+                    </div>
+                    <div class="status-right-panel">
+                        <div class="status-box rocket-circle">
+                            <span class="label">Rocket</span><br><span class="desc">(pitch-yaw status)</span>
+                        </div>
+                        <section class="widget ejection-widget">
+                            <h2 class="widget-header ejection-header">Ejection</h2>
+                            <div class="widget-content ejection-content">
+                                <p class="desc">Data from packet</p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                <div class="attitude-data">
+                    <p><span class="label">Roll :</span> <span class="desc">(from packet)</span></p>
+                    <p><span class="label">Pitch :</span> <span class="desc">(from packet)</span></p>
+                    <p><span class="label">Yaw :</span> <span class="desc">(from packet)</span></p>
+                </div>
+                <div class="status-telemetry">
+                    <div class="telemetry-box">
+                        <span class="label">Temperature</span><br><span class="desc">(Data from packet)° C</span>
+                    </div>
+                    <div class="telemetry-box">
+                        <span class="label">Pressure</span><br><span class="desc">(Data from packet) hPA</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

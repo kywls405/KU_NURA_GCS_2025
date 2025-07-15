@@ -1,0 +1,252 @@
+/* --- 기본 및 전체 레이아웃 --- */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #fff;
+    margin: 20px 40px;
+    color: #333;
+    font-size: 14px;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.logo {
+    height: 35px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    row-gap: 5px;      /* 위아래 간격 (작게 유지) */
+    column-gap: 30px;  /* 좌우 간격 (원하는 만큼 넓게) */
+    align-items: end;
+}
+
+.position-widget {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.widget-row {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    gap: 25px;
+}
+.widget-row .widget {
+    flex: 1;
+}
+.status-widget {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+}
+.status-widget .widget-content {
+    border: 1px solid #EAEAEA;
+    border-top: none;
+    background-color: #DBE2F3;
+}
+
+/* --- 위젯 공통 스타일 --- */
+.widget {
+    display: flex;
+    flex-direction: column;
+}
+
+.widget-header {
+    background-color: #5B74B4;
+    color: white;
+    padding: 9px 15px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 0;
+}
+
+.widget-content {
+    padding: 20px;
+    flex-grow: 1;
+    background-color: #fff; /* 기본 배경은 흰색 */
+}
+
+.label {
+    color: #F77E4F;
+    font-weight: 700;
+}
+
+.desc {
+    color: #555;
+    font-size: 13px;
+}
+
+p {
+    margin: 0 0 10px 0;
+    line-height: 1.6;
+}
+
+/* --- 왼쪽 컬럼 위젯 상세 스타일 --- */
+.blue-bordered {
+    border-top: none; 
+    position: relative;
+    height: 500px;
+    background-color: #DBE2F3; /* Current Position 배경색 */
+}
+
+.map-placeholder {
+    background-color: #DBE2F3;
+    color: #F77E4F;
+    font-weight: 700;
+    font-size: 18px;
+    border: 2px solid #EAEAEA;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.position-data {
+    position: relative;
+    z-index: 2;
+    padding: 0;
+}
+.position-data p {
+    margin-bottom: 15px;
+}
+
+.widget-row .clean-box {
+    border: 1px solid #EAEAEA;
+    border-top: none;
+    background-color: #DBE2F3; 
+}
+
+.chart-placeholder {
+    border: 1px solid #FFFFFF;
+    background-color: #DBE2F3;
+    padding: 10px;
+    text-align: left;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+.chart-placeholder p {
+    margin: 2px 10px;
+}
+
+
+/* --- 오른쪽 컬럼(Current Status) 위젯 상세 스타일 --- */
+.status-main-area {
+    display: flex;
+    gap: 20px;
+    align-items: stretch; 
+    margin-bottom: 20px;
+}
+
+.navball {
+    width: 450px;
+    height: 450px;
+    border-radius: 50%;
+    border: 2px solid #FFFFFF;
+    background-color: #DBE2F3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.status-right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-grow: 1;
+}
+
+.status-box {
+    background-color: #C6D2EC;
+    color: #333;
+    padding: 10px 15px;
+    text-align: left;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.status-box .label {
+    color: #333;
+    font-weight: 700;
+}
+
+.rocket-circle {
+    width: 217.5px; 
+    height: 217.5px;
+    border: 2px solid #FFFFFF;
+    border-radius: 50%;
+    align-items: center;
+    text-align: center;
+    flex-grow: 0; /* 크기 고정 */
+    padding: 10px;
+}
+.rocket-circle .label {
+    margin-bottom: 5px;
+}
+
+.attitude-data {
+    background-color: #DBE2F3;
+    border-top: 1px solid #ffffff;
+    padding-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    flex-wrap: wrap;
+}
+.attitude-data p {
+    margin: 0;
+}
+
+.status-telemetry {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #ffffff;
+    background-color: #DBE2F3;
+}
+
+.telemetry-box {
+    border: 1px solid #CCCCCC;
+    background-color: #DBE2F3;
+    padding: 10px 15px;
+    border-radius: 4px;
+    text-align: center;
+    flex: 1;
+}
+
+/* --- [추가] Ejection 위젯 전용 스타일 --- */
+.ejection-widget {
+    flex-grow: 1; /* Rocket 서클 아래 남는 공간을 모두 채움 */
+}
+
+.ejection-header {
+    background-color: #4A5568; 
+}
+
+.ejection-content {
+    background-color: #C6D2EC; 
+    border: 1px solid #EAEAEA;
+    border-top: none;
+    flex-grow: 1; 
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+}
