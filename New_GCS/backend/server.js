@@ -1,16 +1,25 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const path = require('path');
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import path from 'path';
+// 👉 1. __dirname을 위해 추가
+import { fileURLToPath } from 'url';
+
+// 👉 2. __dirname 정의
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer(app); // socket.io를 위한 서버
 const io = new Server(server, {
   cors: { origin: "*" }
 });
 
 app.use(cors());
+
+// 정적 파일 제공
+app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 io.on('connection', socket => {
@@ -41,6 +50,7 @@ setInterval(() => {
   io.emit('rocketData', packet);
 }, 1000);
 
+// 👉 3. app.listen() 대신 server.listen() 사용
 server.listen(3000, () => {
   console.log('🚀 Server running at http://localhost:3000');
 });

@@ -1,252 +1,468 @@
-/* --- 기본 및 전체 레이아웃 --- */
+/* ==========================================================================
+   1. 기본 설정 및 전역 스타일 (Root & Global Styles)
+   ========================================================================== */
+
+:root {
+    --main-blue: #5B74B4;
+    --accent-orange: #F77E4F;
+    --content-bg-1: #EDF2F7;
+    --content-bg-2: #F7FAFC;
+    --panel-bg: #E0E7FF;
+    --border-color: #E2E8F0;
+    --text-primary: #1F2937;
+    --text-secondary: #6B7280;
+    --danger-red: #EF4444;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: 'Noto Sans KR', sans-serif;
-    background-color: #fff;
-    margin: 20px 40px;
-    color: #333;
-    font-size: 14px;
+    background-color: #F8FAFC;
+    color: var(--text-primary);
+    font-size: 15px; /* 기본 폰트 크기 14px -> 15px로 상향 */
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+}
+
+p { 
+    margin: 0; 
+}
+
+/* ==========================================================================
+   2. 전체 레이아웃 (Main Layout)
+   ========================================================================== */
+
+/* --- 컨테이너 및 헤더 --- */
+.gcs-container {
+    display: flex;
+    flex-direction: column;
+    padding: 30px 40px;
+    flex-grow: 1;
+    min-height: 0;
 }
 
 .page-header {
     display: flex;
     align-items: center;
-    gap: 20px;
-    margin-bottom: 25px;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+}
+
+.logo-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
 }
 
 .logo {
-    height: 35px;
+    width: 180px;
+    height: auto;
 }
 
+.separator {
+    height: 2px;
+    width: 95%;
+    margin: 0 auto 25px auto;
+    background-image: linear-gradient(to right, transparent, var(--main-blue), transparent);
+}
+
+/* --- 헤더 타이머 --- */
+.timers-group {
+    display: flex;
+    gap: 15px;
+}
+
+.mission-timer {
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 16px;
+    text-align: right;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.mission-timer .label {
+    font-size: 12px; /* 11px -> 12px로 상향 */
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 2px;
+}
+
+.mission-timer .value {
+    font-family: 'Roboto Mono', monospace; /* 데이터용 글꼴 적용 */
+    font-size: 20px;
+    color: var(--main-blue);
+}
+
+/* --- 대시보드 그리드 --- */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1.6fr 1fr;
-    row-gap: 5px;      /* 위아래 간격 (작게 유지) */
-    column-gap: 30px;  /* 좌우 간격 (원하는 만큼 넓게) */
-    align-items: end;
-}
-
-.position-widget {
-    grid-column: 1;
-    grid-row: 1;
-}
-
-.widget-row {
-    grid-column: 1;
-    grid-row: 2;
-    display: flex;
+    grid-template-columns: 1.5fr 1fr 1.2fr;
+    grid-template-rows: auto 1fr;
     gap: 25px;
-}
-.widget-row .widget {
-    flex: 1;
-}
-.status-widget {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-}
-.status-widget .widget-content {
-    border: 1px solid #EAEAEA;
-    border-top: none;
-    background-color: #DBE2F3;
+    flex-grow: 1;
+    min-height: 0;
 }
 
-/* --- 위젯 공통 스타일 --- */
+/* 그리드 영역 배치 */
+.status-widget { grid-column: 1; grid-row: 1; }
+.center-column { grid-column: 2; display: flex; flex-direction: column; gap: 5px; }
+.right-column { grid-column: 3; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.altitude-widget { grid-row: 1; }
+.acceleration-widget { grid-row: 2; }
+.position-widget { grid-row: 1; }
+.event-log-widget { grid-row: 2; }
+
+
+/* ==========================================================================
+   3. 위젯 공통 스타일 (Common Widget Styles)
+   ========================================================================== */
+
 .widget {
     display: flex;
     flex-direction: column;
+    border-radius: 12px;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
 }
 
 .widget-header {
-    background-color: #5B74B4;
+    background-image: linear-gradient(to bottom, #637DC1, var(--main-blue));
     color: white;
-    padding: 9px 15px;
-    font-size: 15px;
-    font-weight: 500;
-    border-radius: 4px 4px 0 0;
-    margin-bottom: 0;
+    padding: 10px 20px; /* 세로 패딩 조절 */
+    font-size: 18px; /* 17px -> 18px로 상향 */
+    font-weight: 600;  /* 굵기 상향 */
+    border-bottom: 1px solid #4A5568;
+    margin: 0;
 }
 
 .widget-content {
     padding: 20px;
     flex-grow: 1;
-    background-color: #fff; /* 기본 배경은 흰색 */
+    display: flex;
+    flex-direction: column;
 }
 
 .label {
-    color: #F77E4F;
-    font-weight: 700;
-}
-
-.desc {
-    color: #555;
     font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    font-weight: 600; /* 굵기 상향 */
 }
 
-p {
-    margin: 0 0 10px 0;
-    line-height: 1.6;
+.value {
+    font-family: 'Roboto Mono', monospace; /* 모든 데이터 값에 고정폭 글꼴 적용 */
+    font-size: 17px; /* 18px -> 17px로 조절 */
+    color: var(--text-primary);
+    font-weight: 400; /* 데이터는 보통 굵기로 */
 }
 
-/* --- 왼쪽 컬럼 위젯 상세 스타일 --- */
-.blue-bordered {
-    border-top: none; 
-    position: relative;
-    height: 500px;
-    background-color: #DBE2F3; /* Current Position 배경색 */
+.telemetry-font {
+    font-family: 'Roboto Mono', monospace;
 }
 
-.map-placeholder {
-    background-color: #DBE2F3;
-    color: #F77E4F;
-    font-weight: 700;
-    font-size: 18px;
-    border: 2px solid #EAEAEA;
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1;
+/* ==========================================================================
+   4. 왼쪽 컬럼: 상태 위젯 (Status Widget)
+   ========================================================================== */
+
+.status-widget { 
+    flex-grow: 1; 
 }
 
-.position-data {
-    position: relative;
-    z-index: 2;
-    padding: 0;
-}
-.position-data p {
-    margin-bottom: 15px;
+.status-widget .widget-content { 
+    background-color: var(--content-bg-1); 
+    gap: 25px; 
 }
 
-.widget-row .clean-box {
-    border: 1px solid #EAEAEA;
-    border-top: none;
-    background-color: #DBE2F3; 
-}
-
-.chart-placeholder {
-    border: 1px solid #FFFFFF;
-    background-color: #DBE2F3;
-    padding: 10px;
-    text-align: left;
-    height: 180px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin-bottom: 15px;
-}
-.chart-placeholder p {
-    margin: 2px 10px;
-}
-
-
-/* --- 오른쪽 컬럼(Current Status) 위젯 상세 스타일 --- */
-.status-main-area {
-    display: flex;
-    gap: 20px;
-    align-items: stretch; 
-    margin-bottom: 20px;
-}
-
-.navball {
-    width: 450px;
-    height: 450px;
-    border-radius: 50%;
-    border: 2px solid #FFFFFF;
-    background-color: #DBE2F3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.status-right-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.status-layout-grid {
+    display: grid; 
+    grid-template-columns: 2fr 1fr;
+    gap: 20px; 
     flex-grow: 1;
 }
 
-.status-box {
-    background-color: #C6D2EC;
-    color: #333;
-    padding: 10px 15px;
-    text-align: left;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-.status-box .label {
-    color: #333;
-    font-weight: 700;
+/* --- 자세계 패널 --- */
+.attitude-main-panel { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
 }
 
-.rocket-circle {
-    width: 217.5px; 
-    height: 217.5px;
-    border: 2px solid #FFFFFF;
+.navball {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 380px;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
     border-radius: 50%;
-    align-items: center;
-    text-align: center;
-    flex-grow: 0; /* 크기 고정 */
-    padding: 10px;
+    border: 2px solid #fff;
+    background-color: var(--panel-bg);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.1), 0 2px 5px rgba(0,0,0,0.1);
 }
-.rocket-circle .label {
-    margin-bottom: 5px;
+
+#navball-canvas {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
 }
 
 .attitude-data {
-    background-color: #DBE2F3;
-    border-top: 1px solid #ffffff;
-    padding-top: 15px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    flex-wrap: wrap;
-}
-.attitude-data p {
-    margin: 0;
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px;
+    background-color: var(--panel-bg); 
+    padding: 15px;
+    border-radius: 8px; 
+    border: 1px solid #D1D5DB;
 }
 
+.attitude-data .data-item { 
+    text-align: center; 
+}
+/* .attitude-data .value는 공통 .value 스타일을 따름 */
+
+/* --- 시스템 패널 --- */
+.systems-side-panel { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
+}
+
+.yaw-indicator-box, .ejection-box {
+    background-color: var(--panel-bg); 
+    border-radius: 8px;
+    border: 1px solid #D1D5DB; 
+    padding: 15px; 
+    text-align: center;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    gap: 10px;
+}
+
+.ejection-box { 
+    flex-grow: 1; 
+    justify-content: space-between; 
+}
+
+.yaw-indicator {
+    width: 100px; 
+    height: 100px; 
+    border-radius: 50%;
+    background-color: #fff; 
+    border: 2px solid #A0AEC0;
+    margin: 0 auto; 
+    position: relative;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+}
+
+.rocket-icon { 
+    font-size: 2em; 
+    color: var(--text-dark); /* text-dark 변수가 없으므로 text-primary로 대체 고려 */
+    transform: rotate(0deg); 
+    transition: transform 0.2s linear; 
+}
+
+.ejection-box .value { 
+    font-size: 24px; /* 중요 상태값이므로 크기 강조 */
+    font-weight: 700;
+}
+
+.status-safe { 
+    color: #34D399; 
+}
+
+.command-button {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: var(--danger-red);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 10px;
+}
+
+.command-button:hover {
+    background-color: #C53030;
+}
+
+.command-button:active {
+    transform: scale(0.98);
+}
+
+/* --- 원격 측정 패널 --- */
 .status-telemetry {
-    display: flex;
-    gap: 15px;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #ffffff;
-    background-color: #DBE2F3;
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px;
+    border-top: 1px solid #D1D5DB; 
+    padding-top: 20px;
+    margin-top: auto;
 }
 
 .telemetry-box {
-    border: 1px solid #CCCCCC;
-    background-color: #DBE2F3;
-    padding: 10px 15px;
-    border-radius: 4px;
+    background-color: #fff; 
+    border: 1px solid #D1D5DB;
+    border-radius: 8px; 
+    padding: 15px; 
     text-align: center;
-    flex: 1;
+}
+/* .telemetry-box .value는 공통 .value 스타일을 따름 */
+
+
+/* ==========================================================================
+   5. 중앙 컬럼: 고도 및 가속도 위젯 (Altitude & Acceleration Widgets)
+   ========================================================================== */
+
+.altitude-widget, .acceleration-widget {
+    min-height: 0;
 }
 
-/* --- [추가] Ejection 위젯 전용 스타일 --- */
-.ejection-widget {
-    flex-grow: 1; /* Rocket 서클 아래 남는 공간을 모두 채움 */
+.altitude-widget .widget-content {
+    padding-bottom: 20px; /* 하단 여백 통일 */
 }
 
-.ejection-header {
-    background-color: #4A5568; 
+.acceleration-widget .widget-content {
+    padding-top: 20px; 
 }
 
-.ejection-content {
-    background-color: #C6D2EC; 
-    border: 1px solid #EAEAEA;
-    border-top: none;
-    flex-grow: 1; 
+.chart-placeholder {
+    background-color: #fff; 
+    border: 1px dashed #CBD5E0;
+    border-radius: 6px; 
+    min-height: 180px;
+}
+
+/* --- 하단 데이터 패널 (고도, 가속도 공통) --- */
+.altitude-data,
+.acceleration-data {
+    display: grid;
+    gap: 15px; /* 간격 조절 */
+    background-color: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #D1D5DB;
+    margin-top: 15px; /* 차트와의 간격 조절 */
+}
+
+.altitude-data {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.acceleration-data {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.altitude-data .data-item,
+.acceleration-data .data-item {
+    text-align: center;
+}
+/* .altitude-data .value 등은 공통 .value 스타일을 따름 */
+
+/* --- 최고 고도 --- */
+.max-altitude { 
+    margin-top: 15px; 
+    border-top: 1px solid var(--border-color); 
+    padding-top: 15px; 
+}
+
+.altitude-widget .chart-placeholder {
+    flex-grow: 1;
+}
+
+/* ==========================================================================
+   6. 오른쪽 컬럼: 위치 및 이벤트 로그 위젯 (Position & Event Log Widgets)
+   ========================================================================== */
+
+/* --- 위치 위젯 --- */
+.position-widget { 
+    flex: 2 1 0; 
+}
+
+.position-widget .widget-content { 
+    background-color: var(--content-bg-1); 
+}
+
+.position-data {
     display: flex;
-    align-items: center;
-    padding-left: 15px;
+    justify-content: flex-start;
+    gap: 40px;
+    margin-bottom: 15px; /* 지도와의 간격 조절 */
+}
+
+.map-placeholder {
+    background-color: var(--panel-bg); 
+    border: 1px solid #D1D5DB;
+    border-radius: 8px; 
+    flex-grow: 1;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-weight: 700; 
+    font-size: 1.6em; 
+    color: var(--accent-orange);
+    height: 220px;
+}
+
+#live-map {
+    height: 360px;
+    border-radius: 8px;
+    border: 1px solid #D1D5DB;
+    z-index: 1;
+}
+
+/* --- 이벤트 로그 위젯 --- */
+.event-log-widget { 
+    flex: 1 1 0; 
+    min-height: 200px; 
+    display: flex; 
+    flex-direction: column; 
+}
+
+.event-log-content {
+    background-color: var(--text-primary);
+    color: #F7FAFC;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px; /* 12px -> 13px로 가독성 향상 */
+    border-radius: 0 0 11px 11px;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.event-log-content p { 
+    margin-top: 0;
+    margin-bottom: 8px; /* 로그 간 간격 조절 */
+}
+
+.log-time { 
+    color: var(--accent-orange); 
+    margin-right: 10px; 
+}
+
+.log-system { 
+    color: #63B3ED; 
+}
+
+.log-info { 
+    color: #9CA3AF; 
 }

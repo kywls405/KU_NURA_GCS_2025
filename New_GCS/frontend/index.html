@@ -1,90 +1,168 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rocket Telemetry Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GCS Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 </head>
 <body>
+  <div class="gcs-container">
     <header class="page-header">
-        <img src="CommunicationMark_Eng.jpg" alt="Kookmin University Logo" class="logo">
-        <img src="Asec_Symbol.png" alt="ASEC Logo" class="logo">
+      <div class="logo-group">
+        <img src="../assets/CommunicationMark_Eng.png" alt="Konkuk University Logo" class="logo" />
+        <img src="../assets/Asec_Symbol.png" alt="ASEC Logo" class="logo" />
+      </div>
+      <div class="timers-group">
+        <div class="mission-timer">
+          <span class="label">TIME</span>
+          <span class="value telemetry-font" id="time">08:12:45</span>
+        </div>
+        <div class="mission-timer">
+          <span class="label">FLIGHT TIME</span>
+          <span class="value telemetry-font" id="flight-time">T+ 00:00:00</span>
+        </div>
+      </div>
     </header>
 
+    <div class="separator"></div>
+
     <main class="dashboard-grid">
-        <section class="widget position-widget">
-            <h2 class="widget-header">Current Position</h2>
-            <div class="widget-content blue-bordered">
-                <div class="position-data">
-                    <p><span class="label">Longitude</span><br><span class="desc">(Data from packet)° E</span></p>
-                    <p><span class="label">Latitude</span><br><span class="desc">(Data from packet)° N</span></p>
+      <section class="widget status-widget">
+        <h2 class="widget-header">Current Status</h2>
+        <div class="widget-content">
+          <div class="status-layout-grid">
+            <div class="attitude-main-panel">
+              <div class="navball">
+                <canvas id="navball-canvas" width="300" height="300"></canvas>
+              </div>
+              <div class="attitude-data">
+                <div class="data-item">
+                  <span class="label">Roll</span>
+                  <span class="value telemetry-font" id="roll">–</span>
                 </div>
-                <div class="map-placeholder">MAP</div>
+                <div class="data-item">
+                  <span class="label">Pitch</span>
+                  <span class="value telemetry-font" id="pitch">–</span>
+                </div>
+                <div class="data-item">
+                  <span class="label">Yaw</span>
+                  <span class="value telemetry-font" id="yaw">–</span>
+                </div>
+                </div>
             </div>
-        </section>
-
-        <div class="widget-row">
-            <section class="widget">
-                <h2 class="widget-header">Altitude</h2>
-                <div class="widget-content clean-box">
-                    <div class="chart-placeholder">
-                        <p><span class="label">Line Chart</span></p>
-                        <p class="desc">(Y Axis -> P_alt, Alt (These are from packet(separately, meter)</p>
-                        <p class="desc">X Axis -> Timestamp(change to sec))</p>
-                    </div>
-                    <p><span class="label">MAX Altitude</span> : <span class="desc">- (m)</span></p>
+            <div class="systems-side-panel">
+              <div class="yaw-indicator-box">
+                <p class="label">Rocket Yaw</p>
+                <div class="yaw-indicator">
+                  <canvas id="rocket-icon" width="180" height="180"></canvas>
                 </div>
-            </section>
-            <section class="widget">
-                <h2 class="widget-header">Acceleration</h2>
-                <div class="widget-content clean-box">
-                    <div class="chart-placeholder">
-                        <p><span class="label">Line Chart</span></p>
-                        <p class="desc">(Y Axis -> ax, ay, az (These are from packet(separately)</p>
-                        <p class="desc">X Axis -> Timestamp(change to sec))</p>
-                    </div>
-                </div>
-            </section>
+              </div>
+              <div class="ejection-box">
+                <p class="label">Ejection</p>
+                <p class="value status-safe telemetry-font" id="ejection">SAFE</p>
+                <button class="command-button">EJECT</button>
+              </div>
+            </div>
+          </div>
+          <div class="status-telemetry">
+            <div class="telemetry-box">
+              <p class="label">Temperature</p>
+              <p class="value telemetry-font" id="temp">– °C</p>
+            </div>
+            <div class="telemetry-box">
+              <p class="label">Pressure</p>
+              <p class="value telemetry-font" id="pressure">– hPa</p>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <section class="widget status-widget">
-            <h2 class="widget-header">Current Status</h2>
-            <div class="widget-content status-content-box">
-                <div class="status-main-area">
-                    <div class="navball">
-                        <span class="label">Navball</span><br><span class="desc">(roll-pitch-yaw status)</span>
-                    </div>
-                    <div class="status-right-panel">
-                        <div class="status-box rocket-circle">
-                            <span class="label">Rocket</span><br><span class="desc">(pitch-yaw status)</span>
-                        </div>
-                        <section class="widget ejection-widget">
-                            <h2 class="widget-header ejection-header">Ejection</h2>
-                            <div class="widget-content ejection-content">
-                                <p class="desc">Data from packet</p>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-                <div class="attitude-data">
-                    <p><span class="label">Roll :</span> <span class="desc">(from packet)</span></p>
-                    <p><span class="label">Pitch :</span> <span class="desc">(from packet)</span></p>
-                    <p><span class="label">Yaw :</span> <span class="desc">(from packet)</span></p>
-                </div>
-                <div class="status-telemetry">
-                    <div class="telemetry-box">
-                        <span class="label">Temperature</span><br><span class="desc">(Data from packet)° C</span>
-                    </div>
-                    <div class="telemetry-box">
-                        <span class="label">Pressure</span><br><span class="desc">(Data from packet) hPA</span>
-                    </div>
-                </div>
+      <div class="center-column">
+        <section class="widget altitude-widget">
+          <h2 class="widget-header">Altitude</h2>
+          <div class="widget-content">
+            <div class="chart-placeholder" id="altitude-chart"></div>
+            <div class="altitude-data">
+              <div class="data-item">
+                <span class="label">P_Alt</span>
+                <span class="value telemetry-font" id="p_alt">– m</span>
+              </div>
+              <div class="data-item">
+                <span class="label">Alt</span>
+                <span class="value telemetry-font" id="alt">– m</span>
+              </div>
             </div>
+            
+            <p class="max-altitude">
+              <span class="label">MAX Altitude</span> : 
+              <span class="desc telemetry-font" id="max_alt">– m</span>
+            </p>
+          </div>
         </section>
+
+        <section class="widget acceleration-widget">
+          <h2 class="widget-header">Acceleration</h2>
+          <div class="widget-content">
+            <div class="chart-placeholder" id="acceleration-chart"></div>
+            <div class="acceleration-data">
+              <div class="data-item">
+                <span class="label">Ax</span>
+                <span class="value telemetry-font" id="ax">–</span>
+              </div>
+              <div class="data-item">
+                <span class="label">Ay</span>
+                <span class="value telemetry-font" id="ay">–</span>
+              </div>
+              <div class="data-item">
+                <span class="label">Az</span>
+                <span class="value telemetry-font" id="az">–</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="right-column">
+        <section class="widget position-widget">
+          <h2 class="widget-header">Current Position</h2>
+          <div class="widget-content">
+            <div class="position-data">
+              <div>
+                <p class="label">Longitude</p>
+                <p class="desc telemetry-font" id="lon">–</p>
+              </div>
+              <div>
+                <p class="label">Latitude</p>
+                <p class="desc telemetry-font" id="lat">–</p>
+              </div>
+            </div>
+            <div class="map-placeholder" id="map">MAP</div>
+          </div>
+        </section>
+        <section class="widget event-log-widget">
+          <h2 class="widget-header">Event Log</h2>
+          <div class="widget-content event-log-content" id="event-log">
+            <p><span class="log-time">07:43:30</span> <span class="log-system">[SYSTEM]</span> GCS Initialized.</p>
+            <p><span class="log-time">07:43:31</span> <span class="log-info">[INFO]</span> Awaiting telemetry...</p>
+          </div>
+        </section>
+      </div>
     </main>
+  </div>
+
+  <!-- 📡 실시간 소켓 수신 -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="./main.js"></script>
+
+  <!-- 📍 지도 -->
+  <script src="./map.js"></script>
+
+  <!-- 🌐 Navball with Three.js (모듈 방식) -->
+  <script type="module" src="./navball.js"></script>
+  <script type="module" src="./map.js"></script>
 </body>
 </html>
