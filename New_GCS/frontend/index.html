@@ -4,17 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GCS Dashboard</title>
+  
   <link rel="stylesheet" href="style.css" />
+
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
   <div class="gcs-container">
     <header class="page-header">
       <div class="logo-group">
-        <img src="../assets/CommunicationMark_Eng.png" alt="Konkuk University Logo" class="logo" />
-        <img src="../assets/Asec_Symbol.png" alt="ASEC Logo" class="logo" />
+        <img src="assets/CommunicationMark_Eng.png" alt="Konkuk University Logo" class="logo" />
+        <img src="assets/Asec_Symbol.png" alt="ASEC Logo" class="logo" />
       </div>
       <div class="timers-group">
         <div class="mission-timer">
@@ -55,16 +59,20 @@
                 </div>
             </div>
             <div class="systems-side-panel">
-              <div class="yaw-indicator-box">
-                <p class="label">Rocket Yaw</p>
-                <div class="yaw-indicator">
+              <div class="rocket-attitude-box">
+                <p class="label">Rocket Attitude</p>
+                <div class="rocket-attitude">
                   <canvas id="rocket-icon" width="180" height="180"></canvas>
                 </div>
               </div>
               <div class="ejection-box">
                 <p class="label">Ejection</p>
                 <p class="value status-safe telemetry-font" id="ejection">SAFE</p>
-                <button class="command-button">EJECT</button>
+                <button class="Ejection-command-button">EJECT</button>
+              </div>
+              <div class="Carnard-Neutral-Set-box">
+                <p class="label">Carnard Neutral Set</p>
+                <button class="Carnard-command-button">SET</button>
               </div>
             </div>
           </div>
@@ -154,15 +162,11 @@
     </main>
   </div>
 
-  <!-- 📡 실시간 소켓 수신 -->
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="./main.js"></script>
 
-  <!-- 📍 지도 -->
-  <script src="./map.js"></script>
-
-  <!-- 🌐 Navball with Three.js (모듈 방식) -->
   <script type="module" src="./navball.js"></script>
   <script type="module" src="./map.js"></script>
+
 </body>
 </html>

@@ -24,7 +24,7 @@ body {
     font-family: 'Noto Sans KR', sans-serif;
     background-color: #F8FAFC;
     color: var(--text-primary);
-    font-size: 15px; /* 기본 폰트 크기 14px -> 15px로 상향 */
+    font-size: 14px;
     line-height: 1.6;
     display: flex;
     flex-direction: column;
@@ -89,15 +89,14 @@ p {
 }
 
 .mission-timer .label {
-    font-size: 12px; /* 11px -> 12px로 상향 */
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     color: var(--text-secondary);
     display: block;
     margin-bottom: 2px;
 }
 
 .mission-timer .value {
-    font-family: 'Roboto Mono', monospace; /* 데이터용 글꼴 적용 */
     font-size: 20px;
     color: var(--main-blue);
 }
@@ -139,9 +138,9 @@ p {
 .widget-header {
     background-image: linear-gradient(to bottom, #637DC1, var(--main-blue));
     color: white;
-    padding: 10px 20px; /* 세로 패딩 조절 */
-    font-size: 18px; /* 17px -> 18px로 상향 */
-    font-weight: 600;  /* 굵기 상향 */
+    padding: 8px 20px;
+    font-size: 17px;
+    font-weight: 500;
     border-bottom: 1px solid #4A5568;
     margin: 0;
 }
@@ -157,14 +156,13 @@ p {
     font-size: 13px;
     color: var(--text-secondary);
     margin-bottom: 4px;
-    font-weight: 600; /* 굵기 상향 */
+    font-weight: 500;
 }
 
 .value {
-    font-family: 'Roboto Mono', monospace; /* 모든 데이터 값에 고정폭 글꼴 적용 */
-    font-size: 17px; /* 18px -> 17px로 조절 */
+    font-size: 18px;
     color: var(--text-primary);
-    font-weight: 400; /* 데이터는 보통 굵기로 */
+    font-weight: 700;
 }
 
 .telemetry-font {
@@ -202,7 +200,7 @@ p {
     position: relative;
     overflow: hidden;
     width: 100%;
-    max-width: 380px;
+    max-width: 440px;
     aspect-ratio: 1 / 1;
     margin: 0 auto;
     border-radius: 50%;
@@ -232,7 +230,10 @@ p {
 .attitude-data .data-item { 
     text-align: center; 
 }
-/* .attitude-data .value는 공통 .value 스타일을 따름 */
+
+.attitude-data .value { 
+    font-size: 16px; 
+}
 
 /* --- 시스템 패널 --- */
 .systems-side-panel { 
@@ -241,7 +242,7 @@ p {
     gap: 20px; 
 }
 
-.yaw-indicator-box, .ejection-box {
+.rocket-attitude-box, .ejection-box, .Carnard-Neutral-Set-box {
     background-color: var(--panel-bg); 
     border-radius: 8px;
     border: 1px solid #D1D5DB; 
@@ -258,9 +259,9 @@ p {
     justify-content: space-between; 
 }
 
-.yaw-indicator {
-    width: 100px; 
-    height: 100px; 
+.rocket-attitude {
+    width: 140px; 
+    height: 140px; 
     border-radius: 50%;
     background-color: #fff; 
     border: 2px solid #A0AEC0;
@@ -273,21 +274,20 @@ p {
 
 .rocket-icon { 
     font-size: 2em; 
-    color: var(--text-dark); /* text-dark 변수가 없으므로 text-primary로 대체 고려 */
+    color: var(--text-dark); 
     transform: rotate(0deg); 
     transition: transform 0.2s linear; 
 }
 
 .ejection-box .value { 
-    font-size: 24px; /* 중요 상태값이므로 크기 강조 */
-    font-weight: 700;
+    font-size: 20px; 
 }
 
 .status-safe { 
     color: #34D399; 
 }
 
-.command-button {
+.Ejection-command-button {
     font-family: 'Noto Sans KR', sans-serif;
     background-color: var(--danger-red);
     color: white;
@@ -301,11 +301,33 @@ p {
     margin-top: 10px;
 }
 
-.command-button:hover {
+.Ejection-command-button:hover {
     background-color: #C53030;
 }
 
-.command-button:active {
+.Ejection-command-button:active {
+    transform: scale(0.98);
+}
+
+.Carnard-command-button {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: var(--danger-red);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 2px;
+}
+
+.Carnard-command-button:hover {
+    background-color: #C53030;
+}
+
+.Carnard-command-button:active {
     transform: scale(0.98);
 }
 
@@ -326,8 +348,10 @@ p {
     padding: 15px; 
     text-align: center;
 }
-/* .telemetry-box .value는 공통 .value 스타일을 따름 */
 
+.telemetry-box .value { 
+    font-size: 16px; 
+}
 
 /* ==========================================================================
    5. 중앙 컬럼: 고도 및 가속도 위젯 (Altitude & Acceleration Widgets)
@@ -338,7 +362,7 @@ p {
 }
 
 .altitude-widget .widget-content {
-    padding-bottom: 20px; /* 하단 여백 통일 */
+    padding-bottom: 5px; 
 }
 
 .acceleration-widget .widget-content {
@@ -352,39 +376,52 @@ p {
     min-height: 180px;
 }
 
-/* --- 하단 데이터 패널 (고도, 가속도 공통) --- */
-.altitude-data,
-.acceleration-data {
+/* --- 고도 위젯 하단 데이터 패널 --- */
+.altitude-data {
     display: grid;
-    gap: 15px; /* 간격 조절 */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3px;
     background-color: var(--panel-bg);
     padding: 15px;
     border-radius: 8px;
     border: 1px solid #D1D5DB;
-    margin-top: 15px; /* 차트와의 간격 조절 */
+    margin-top: 3px;
 }
 
-.altitude-data {
-    grid-template-columns: repeat(2, 1fr);
+.altitude-data .data-item {
+    text-align: center;
+}
+
+.altitude-data .value {
+    font-size: 16px;
 }
 
 .acceleration-data {
+    display: grid;
     grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+    background-color: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #D1D5DB;
+    margin-top: 3px;
 }
 
-.altitude-data .data-item,
-.acceleration-data .data-item {
+.altitude-data .data-item {
     text-align: center;
 }
-/* .altitude-data .value 등은 공통 .value 스타일을 따름 */
+
+.altitude-data .value {
+    font-size: 16px;
+}
 
 /* --- 최고 고도 --- */
 .max-altitude { 
-    margin-top: 15px; 
+    margin-top: 20px; 
     border-top: 1px solid var(--border-color); 
-    padding-top: 15px; 
+    padding-top: 10px; 
+    padding-bottom: 8px;
 }
-
 .altitude-widget .chart-placeholder {
     flex-grow: 1;
 }
@@ -406,7 +443,7 @@ p {
     display: flex;
     justify-content: flex-start;
     gap: 40px;
-    margin-bottom: 15px; /* 지도와의 간격 조절 */
+    margin-bottom: 5px;
 }
 
 .map-placeholder {
@@ -442,16 +479,15 @@ p {
     background-color: var(--text-primary);
     color: #F7FAFC;
     font-family: 'Roboto Mono', monospace;
-    font-size: 13px; /* 12px -> 13px로 가독성 향상 */
+    font-size: 12px;
     border-radius: 0 0 11px 11px;
     flex-grow: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 0 20px 20px 20px;
 }
 
 .event-log-content p { 
-    margin-top: 0;
-    margin-bottom: 8px; /* 로그 간 간격 조절 */
+    margin-top: 15px;
 }
 
 .log-time { 
