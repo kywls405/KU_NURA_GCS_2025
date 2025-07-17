@@ -250,8 +250,27 @@ p {
     text-align: center;
     display: flex; 
     flex-direction: column; 
-    justify-content: center; 
+    justify-content: space-between; 
     gap: 10px;
+}
+
+/* === 추가된 부분: 위젯 내부 헤더 (제목 + 각도) 스타일 === */
+.box-header {
+  display: flex;
+  justify-content: space-between; /* 제목과 각도를 양쪽 끝으로 정렬 */
+  align-items: center;
+}
+
+/* === 추가된 부분: 헤더 내 텍스트 p태그의 기본 마진 제거 === */
+.box-header .label,
+.box-header .angle-value {
+  margin: 0;
+}
+
+/* === 추가된 부분: 각도 값 텍스트 스타일 === */
+.box-header .angle-value {
+  color: #333333; /* 요청하신 검은색 계열 텍스트 */
+  font-weight: 500;
 }
 
 .ejection-box { 
@@ -263,7 +282,7 @@ p {
     width: 140px; 
     height: 140px; 
     border-radius: 50%;
-    background-color: #fff; 
+    background-color: #0e0544; 
     border: 2px solid #A0AEC0;
     margin: 0 auto; 
     position: relative;
@@ -279,36 +298,77 @@ p {
     transition: transform 0.2s linear; 
 }
 
-.ejection-box .value { 
-    font-size: 20px; 
+/* Ejection 상태 텍스트의 전체 컨테이너 */
+.ejection-box .value#ejection {
+  position: relative; /* 자식과 ::after 요소의 기준점 */
+  font-size: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.status-safe { 
-    color: #34D399; 
+/* 실제 눈에 보이는 주 텍스트를 감싸는 span */
+.ejection-box .value#ejection .main-text {
+  position: relative; /* z-index를 적용하기 위해 필요 */
+  z-index: 1;         /* 잔상보다 위에 보이도록 설정 */
+  font-weight: 700;
 }
 
-.Ejection-command-button {
-    font-family: 'Noto Sans KR', sans-serif;
-    background-color: var(--danger-red);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 10px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    margin-top: 10px;
+/* 잔상(ghost) 효과를 만드는 ::after 가상 요소 */
+.ejection-box .value#ejection::after {
+  content: attr(data-text);   /* JS의 data-text 속성값을 가져옴 */
+  position: absolute;         /* 부모(#ejection)에 겹쳐짐 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  color: #23232425;             /* 잔상 색상 */
+  font-weight: 700;
+  font-size: 70px; /* 원하는 크기로 조절 (예: 48px) */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.Ejection-command-button:hover {
-    background-color: #C53030;
+/* 상태별 색상 (main-text에 적용) */
+.status-safe .main-text { 
+  color: #34D399; /* SAFE 상태일 때 초록색 */
+}
+.status-attitude .main-text {
+  color: #ffee00; /* EJECT 상태일 때 주황색 */
+}
+.status-altitude .main-text {
+  color: #ff00dd; /* EJECT 상태일 때 주황색 */
+}
+.status-timer .main-text {
+  color: #ff0000; /* EJECT 상태일 때 주황색 */
 }
 
-.Ejection-command-button:active {
-    transform: scale(0.98);
+/* --- 버튼 스타일 (변경 없음) --- */
+.Ejection-command-button, .Carnard-command-button {
+  font-family: 'Noto Sans KR', sans-serif;
+  background-color: var(--danger-red);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 10px;
 }
 
+.Ejection-command-button:hover, .Carnard-command-button:hover {
+  background-color: #C53030;
+}
+
+.Ejection-command-button:active, .Carnard-command-button:active {
+  transform: scale(0.98);
+}
+/* 
 .Carnard-command-button {
     font-family: 'Noto Sans KR', sans-serif;
     background-color: var(--danger-red);
@@ -329,7 +389,7 @@ p {
 
 .Carnard-command-button:active {
     transform: scale(0.98);
-}
+} */
 
 /* --- 원격 측정 패널 --- */
 .status-telemetry {
@@ -379,7 +439,7 @@ p {
     display: flex;
     flex-direction: column;
     min-height: 0; /* 내부 컨텐츠가 이 영역을 넘지 않도록 함 */
-    padding: 15px;
+    padding: 10px;
 }
 
 /* --- [핵심] 차트 캔버스가 남은 공간을 모두 채우도록 설정 --- */

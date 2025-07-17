@@ -1,14 +1,14 @@
-// frontend/main.js
-
 import { initNavball, updateNavball } from './navball.js';
-import { initMap, updateMapCenter } from './map.js';
+import { initMap, updateMap } from './map.js';
 import { initCharts, updateCharts } from './charts.js';
+import { initRocketAttitude, updateRocketAttitude } from './rocket_attitude.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   initMap();
   initNavball();
   initCharts();
+  initRocketAttitude();
 
   const uiElements = {
     time: document.getElementById('time'),
@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     yaw: document.getElementById('yaw'),
     p_alt: document.getElementById('p_alt'),
     alt: document.getElementById('alt'),
+    max_alt: document.getElementById('max_alt'),
     ax: document.getElementById('ax'),
     ay: document.getElementById('ay'),
     az: document.getElementById('az'),
@@ -30,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     pressure: document.getElementById('pressure'),
     ejection: document.getElementById('ejection'),
   };
+
+  let maxAltitude = 0;
 
   function updateLocalTime() {
     const now = new Date();
@@ -59,11 +62,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     switch (status) {
       case 0: text = 'SAFE'; className = 'status-safe'; break;
-      case 1: text = 'ATTITUDE EJECT'; className = 'status-warn'; break;
-      case 2: text = 'ALTITUDE EJECT'; className = 'status-warn'; break;
-      case 3: text = 'TIMER EJECT'; className = 'status-warn'; break;
+      case 1: text = 'ATTITUDE EJECTED'; className = 'status-attitude'; break;
+      case 2: text = 'ALTITUDE EJECTED'; className = 'status-altitude'; break;
+      case 3: text = 'TIMER EJECTED'; className = 'status-timer'; break;
     }
-    elem.textContent = text;
+
+    // ▼▼▼ 이 부분이 수정되었습니다 ▼▼▼
+    // 1. 잔상 글씨용 데이터에 '숫자' 형태를 모두 저장합니다.
+    elem.dataset.text = `${status}`;
+    
+    // 2. 실제 색상이 적용될 주 텍스트는 '문자열'만 설정합니다.
+    elem.innerHTML = `<span class="main-text">${text}</span>`;
+
+    // 부모 태그에 클래스 적용
     elem.className = 'value telemetry-font'; 
     elem.classList.add(className);
   }
@@ -71,12 +82,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateDashboard(data) {
     if (!data) return;
 
+    const flightTimeMs = data.timestamp * 1000;
+    const formattedFlightTime = formatFlightTime(flightTimeMs);
+
     uiElements.roll.textContent = `${data.roll}°`;
     uiElements.pitch.textContent = `${data.pitch}°`;
     uiElements.yaw.textContent = `${data.yaw}°`;
 
     uiElements.p_alt.textContent = `${data.P_alt} m`;
     uiElements.alt.textContent = `${data.Alt} m`;
+    
+    const currentAltitude = parseFloat(data.Alt);
+    if (!isNaN(currentAltitude) && currentAltitude > maxAltitude) {
+      maxAltitude = currentAltitude;
+    }
+    uiElements.max_alt.textContent = `${maxAltitude.toFixed(2)} m`;
     
     uiElements.ax.textContent = `${data.ax} m/s²`;
     uiElements.ay.textContent = `${data.ay} m/s²`;
@@ -92,12 +112,15 @@ document.addEventListener('DOMContentLoaded', () => {
     uiElements.temp.textContent = `${data.temp} °C`;
     uiElements.pressure.textContent = `${data.pressure} hPa`;
     
-    // [수정] 서버에서 받은 timestamp(초)에 1000을 곱해 ms 단위로 변환
-    uiElements.flightTime.textContent = formatFlightTime(data.timestamp * 1000);
+    uiElements.flightTime.textContent = formattedFlightTime;
     updateEjectionStatus(data.ejection);
 
     updateNavball(parseFloat(data.roll), parseFloat(data.pitch), parseFloat(data.yaw));
-    updateMapCenter(data.lat, data.lon);
+    
+    updateRocketAttitude(parseFloat(data.pitch), parseFloat(data.yaw));
+
+    updateMap(data.lat, data.lon, formattedFlightTime);
+    
     updateCharts(data);
   }
   
