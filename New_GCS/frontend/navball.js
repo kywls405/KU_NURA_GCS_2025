@@ -61,8 +61,8 @@ export function updateNavball(roll, pitch, yaw) {
   // 변환된 값을 각 축의 회전에 적용
   // 회전 순서(YXZ)에 따라 x축(Pitch), y축(Yaw), z축(Roll)에 값을 할당합니다.
   sphere.rotation.x = pitchRad;
-//   sphere.rotation.y = yawRad;
-//   sphere.rotation.z = rollRad;
+  sphere.rotation.y = yawRad;
+  sphere.rotation.z = rollRad;
 }
 
 /**
