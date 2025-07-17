@@ -2,7 +2,7 @@ class GpsData:
     def __init__(self):
         self.lon = 0.0
         self.lat = 0.0
-        self.alt = 0.0
+        self.Alt = 0.0
 
         self.velN = 0.0
         self.velE = 0.0

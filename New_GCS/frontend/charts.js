@@ -1,153 +1,168 @@
-// charts.js
+// frontend/charts.js
 
-const altCtx = document.getElementById('altChart').getContext('2d');
-const accCtx = document.getElementById('accChart').getContext('2d');
+Chart.register(window.ChartZoom);
 
-const MAX_POINTS = 30;
-const altLabels = [];
-const accLabels = [];
+let altitudeChart, accelerationChart;
+const TIME_WINDOW_SECONDS = 10; // 차트에 10초 분량의 데이터를 보여줌
 
-const altChart = new Chart(altCtx, {
-  type: 'line',
-  data: {
-    labels: altLabels,
-    datasets: [
-      {
-        label: 'P_Alt',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        data: [],
-        tension: 0.3,
-        fill: false,
-        pointRadius: 0
-      },
-      {
-        label: 'Alt',
-        borderColor: 'rgba(255, 159, 64, 1)',
-        backgroundColor: 'rgba(255, 159, 64, 0.2)',
-        data: [],
-        tension: 0.3,
-        fill: false,
-        pointRadius: 0
-      }
-    ]
-  },
-  options: {
+// 비행 시작 시간을 기록하기 위한 변수
+let flightStartTime = null;
+
+/**
+ * 차트의 공통 설정을 생성하는 헬퍼 함수
+ */
+function createChartOptions(xAxisLabel, yAxisLabel, yMin, yMax, yStepSize) {
+  return {
     responsive: true,
-    animation: false,
-    maintainAspectRatio: true, // 수정됨: 비율 유지
+    maintainAspectRatio: false,
     scales: {
-      y: {
-        beginAtZero: false,
-        suggestedMin: 0,
-        suggestedMax: 100,
-        title: {
-          display: true,
-          text: 'Altitude (m)'
-        }
-      },
       x: {
+        type: 'linear',
+        ticks: {
+          color: '#6B7280',
+          // [수정] stepSize와 maxTicksLimit을 함께 사용하여 눈금 제어
+          stepSize: 1,
+          maxTicksLimit: 11 // 보이는 눈금 최대 11개 (0~10)
+          // [삭제] 너무 엄격해서 눈금이 사라지게 만들었던 콜백 함수 제거
+        },
+        grid: { display: false },
         title: {
           display: true,
-          text: 'Time (s)'
+          text: xAxisLabel,
+          color: '#1F2937',
+          font: { weight: 'bold' }
+        }
+      },
+      y: {
+        min: yMin,
+        max: yMax,
+        ticks: {
+          stepSize: yStepSize,
+          color: '#6B7280'
+        },
+        grid: { color: '#E2E8F0' },
+        title: {
+          display: true,
+          text: yAxisLabel,
+          color: '#1F2937',
+          font: { weight: 'bold' }
         }
       }
-    }
-  }
-});
-
-const accChart = new Chart(accCtx, {
-  type: 'line',
-  data: {
-    labels: accLabels,
-    datasets: [
-      {
-        label: 'Acc X',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        data: [],
-        tension: 0.3,
-        fill: false,
-        pointRadius: 0
-      },
-      {
-        label: 'Acc Y',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        data: [],
-        tension: 0.3,
-        fill: false,
-        pointRadius: 0
-      },
-      {
-        label: 'Acc Z',
-        borderColor: 'rgba(153, 102, 255, 1)',
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        data: [],
-        tension: 0.3,
-        fill: false,
-        pointRadius: 0
+    },
+    plugins: {
+      legend: { position: 'top', labels: { color: '#1F2937' } },
+      zoom: {
+        pan: { enabled: true, mode: 'x' },
+        zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
       }
-    ]
-  },
-  options: {
-    responsive: true,
+    },
     animation: false,
-    maintainAspectRatio: true, // 수정됨: 비율 유지
-    scales: {
-      y: {
-        beginAtZero: true,
-        suggestedMin: -10,
-        suggestedMax: 10,
-        title: {
-          display: true,
-          text: 'Acceleration (m/s²)'
+    elements: {
+        line: {
+          tension: 0
+        },
+        point: {
+          radius: 0
         }
-      },
-      x: {
-        title: {
-          display: true,
-          text: 'Time (s)'
-        }
-      }
     }
-  }
-});
-
-let startTime = Date.now();
-
-function updateCharts(packet) {
-  const currentTime = ((Date.now() - startTime) / 1000).toFixed(1);
-
-  if (altLabels.length >= MAX_POINTS) {
-    altLabels.shift();
-    altChart.data.datasets.forEach(dataset => dataset.data.shift());
-  }
-  if (accLabels.length >= MAX_POINTS) {
-    accLabels.shift();
-    accChart.data.datasets.forEach(dataset => dataset.data.shift());
-  }
-
-  altLabels.push(currentTime);
-  accLabels.push(currentTime);
-
-  const pAlt = parseFloat(packet.p_alt);
-  const alt = parseFloat(packet.alt);
-  const ax = parseFloat(packet.ax);
-  const ay = parseFloat(packet.ay);
-  const az = parseFloat(packet.az);
-
-  altChart.data.datasets[0].data.push(isNaN(pAlt) ? null : pAlt);
-  altChart.data.datasets[1].data.push(isNaN(alt) ? null : alt);
-
-  accChart.data.datasets[0].data.push(isNaN(ax) ? null : ax);
-  accChart.data.datasets[1].data.push(isNaN(ay) ? null : ay);
-  accChart.data.datasets[2].data.push(isNaN(az) ? null : az);
-
-  altChart.update();
-  accChart.update();
+  };
 }
 
-if (typeof window !== 'undefined') {
-  window.updateCharts = updateCharts;
+/**
+ * 고도 및 가속도 차트를 초기화하는 함수
+ */
+export function initCharts() {
+  flightStartTime = null;
+
+  const altOptions = createChartOptions('Flight Time (s)', 'Altitude (m)', -1, 500, 100);
+  altOptions.scales.x.min = 0;
+  altOptions.scales.x.max = TIME_WINDOW_SECONDS;
+
+  const altCtx = document.getElementById('altitude-chart').getContext('2d');
+  altitudeChart = new Chart(altCtx, {
+    type: 'line',
+    data: { datasets: [
+        {label: 'P_alt', data: [], borderColor: '#5B74B4', borderWidth: 2, },
+        {label: 'Alt', data: [], borderColor: '#34D399', borderWidth: 2,}
+    ]},
+    options: altOptions
+  });
+
+  const accelOptions = createChartOptions('Flight Time (s)', 'Acceleration (m/s²)', -30, 30, 5);
+  accelOptions.scales.x.min = 0;
+  accelOptions.scales.x.max = TIME_WINDOW_SECONDS;
+
+  const accelCtx = document.getElementById('acceleration-chart').getContext('2d');
+  accelerationChart = new Chart(accelCtx, {
+    type: 'line',
+    data: { datasets: [
+        { label: 'Ax', data: [], borderColor: '#F77E4F', borderWidth: 2 },
+        { label: 'Ay', data: [], borderColor: '#34D399', borderWidth: 2 },
+        { label: 'Az', data: [], borderColor: '#A78BFA', borderWidth: 2 }
+    ]},
+    options: accelOptions
+  });
+}
+
+/**
+ * 차트에 새로운 데이터를 추가하는 함수
+ */
+function addDataToChart(chart, timestamp, data) {
+  chart.data.datasets.forEach(dataset => {
+    const key = dataset.label;
+    const value = data.hasOwnProperty(key) ? parseFloat(data[key]) : null;
+    dataset.data.push({ x: timestamp, y: value });
+  });
+}
+
+/**
+ * 수신된 데이터로 해당 차트만 업데이트하는 함수
+ */
+export function updateCharts(data) {
+  if (!altitudeChart || !accelerationChart) return;
+
+  const serverTimestamp = parseFloat(data.timestamp);
+  if (isNaN(serverTimestamp)) return;
+
+  if (flightStartTime === null) {
+    flightStartTime = serverTimestamp;
+    altitudeChart.data.datasets.forEach(d => d.data = []);
+    accelerationChart.data.datasets.forEach(d => d.data = []);
+  }
+
+  const relativeTimestamp = serverTimestamp - flightStartTime;
+
+  // --- 데이터 추가 ---
+  const hasAltitudeData = data.hasOwnProperty('P_alt') || data.hasOwnProperty('Alt');
+  if (hasAltitudeData) {
+    const altitudeData = { P_alt: data.P_alt, Alt: data.Alt };
+    addDataToChart(altitudeChart, relativeTimestamp, altitudeData);
+  }
+
+  const hasAccelData = data.hasOwnProperty('ax') || data.hasOwnProperty('ay') || data.hasOwnProperty('az');
+  if (hasAccelData) {
+    const accelData = { Ax: data.ax, Ay: data.ay, Az: data.az };
+    addDataToChart(accelerationChart, relativeTimestamp, accelData);
+  }
+
+  // --- X축 스크롤 로직 ---
+  if (relativeTimestamp > TIME_WINDOW_SECONDS) {
+    const minX = relativeTimestamp - TIME_WINDOW_SECONDS;
+    if (hasAltitudeData) {
+        altitudeChart.options.scales.x.min = minX;
+        altitudeChart.options.scales.x.max = relativeTimestamp;
+    }
+    if (hasAccelData) {
+        accelerationChart.options.scales.x.min = minX;
+        accelerationChart.options.scales.x.max = relativeTimestamp;
+    }
+  }
+  
+  // --- 차트 업데이트 ---
+  if (hasAltitudeData) {
+    altitudeChart.update('none');
+  }
+  if (hasAccelData) {
+    accelerationChart.update('none');
+  }
 }

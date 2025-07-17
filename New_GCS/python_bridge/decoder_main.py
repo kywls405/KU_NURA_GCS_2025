@@ -30,7 +30,7 @@ csv_file = open(f"telemetry_log_{timestamp_str}.csv", mode='w', newline='', enco
 csv_writer = csv.DictWriter(csv_file, fieldnames=[
     "timestamp", "local_timestamp",
     "roll", "pitch", "yaw",
-    "p_alt", "alt",
+    "P_alt", "Alt",
     "ax", "ay", "az",
     "lat", "lon",
     "temp", "pressure",
@@ -67,8 +67,8 @@ while True:
                 "roll": imu.euler[0],
                 "pitch": imu.euler[1],
                 "yaw": imu.euler[2],
-                "p_alt": imu.P_alt,
-                "alt": gps.alt,
+                "P_alt": imu.P_alt,
+                "Alt": gps.Alt,
                 "ax": imu.acc[0],
                 "ay": imu.acc[1],
                 "az": imu.acc[2],
@@ -96,7 +96,7 @@ while True:
             csv_writer.writerow(data)
 
             # 콘솔 출력
-            print(f"[IMU] euler: {imu.euler}, [GPS] pos: {gps.lon:.5f}, {gps.lat:.5f}, alt: {gps.alt:.2f}")
+            print(f"[IMU] euler: {imu.euler}, [GPS] pos: {gps.lon:.5f}, {gps.lat:.5f}, alt: {gps.Alt:.2f}")
 
     except KeyboardInterrupt:
         print("\n🛑 User interrupt. Closing resources.")

@@ -14,7 +14,7 @@ class MsgID(enum.Enum):
 
 class Decoder:
     def __init__(self):
-        self.buf = bytearray(128) 
+        self.buf = bytearray(256) 
 
         self.gpsData = GpsData()
         self.imuData = ImuData()
@@ -114,7 +114,7 @@ class Decoder:
             
             self.gpsData.lon = unpacked_data[0]  / 1e7
             self.gpsData.lat = unpacked_data[1]  / 1e7
-            self.gpsData.alt = unpacked_data[2]  / 100.0
+            self.gpsData.Alt = unpacked_data[2]  / 100.0
             self.gpsData.velN = unpacked_data[3] / 100.0
             self.gpsData.velE = unpacked_data[4] / 100.0
             self.gpsData.velD = unpacked_data[5] / 100.0
@@ -138,7 +138,7 @@ class Decoder:
             # GPS
             self.gpsData.lon = unpacked_data[15]  / 1e7
             self.gpsData.lat = unpacked_data[16]  / 1e7
-            self.gpsData.alt = unpacked_data[17]  / 100.0
+            self.gpsData.Alt = unpacked_data[17]  / 100.0
             self.gpsData.velN = unpacked_data[18] / 100.0
             self.gpsData.velE = unpacked_data[19] / 100.0
             self.gpsData.velD = unpacked_data[20] / 100.0
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
         if decoder.is_gps_update():
             gps = decoder.get_gps_data()
-            print(f"pos: {gps.lon:.2f}, {gps.lat:.2f}, {gps.alt:.2f}", end="\t")
+            print(f"pos: {gps.lon:.2f}, {gps.lat:.2f}, {gps.Alt:.2f}", end="\t")
             print(f"vel: {gps.velN:.2f}, {gps.velE:.2f}, {gps.velD:.2f}", end="\n")
 
         if decoder.is_imu_update():

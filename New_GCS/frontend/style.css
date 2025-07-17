@@ -354,76 +354,90 @@ p {
 }
 
 /* ==========================================================================
-   5. 중앙 컬럼: 고도 및 가속도 위젯 (Altitude & Acceleration Widgets)
+   5. 중앙 컬럼: 고도 및 가속도 위젯 (최종 레이아웃 수정)
    ========================================================================== */
 
+/* --- 중앙 컬럼의 기본 레이아웃 --- */
+.center-column {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    min-height: 0; /* 자식 요소의 높이가 부모를 넘지 않도록 하는 핵심 속성 */
+}
+
+/* --- 각 위젯의 크기 및 내부 레이아웃 설정 --- */
 .altitude-widget, .acceleration-widget {
+    flex: 1; /* .center-column의 높이를 1:1로 나눠가짐 */
+    min-height: 0; /* 위젯의 높이가 할당된 공간을 넘지 않도록 함 */
+    display: flex;
+    flex-direction: column;
+}
+
+.altitude-widget .widget-content,
+.acceleration-widget .widget-content {
+    flex-grow: 1; /* 위젯 헤더를 제외한 나머지 공간을 모두 차지 */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* 내부 컨텐츠가 이 영역을 넘지 않도록 함 */
+    padding: 15px;
+}
+
+/* --- [핵심] 차트 캔버스가 남은 공간을 모두 채우도록 설정 --- */
+.altitude-chart-wrapper {
+    position: relative; /* 캔버스의 기준점 역할 */
+    flex-grow: 1; /* 다른 요소들을 제외한 모든 세로 공간을 차지 */
+    min-height: 0;
+}
+.acceleration-chart-wrapper {
+    position: relative; /* 캔버스의 기준점 역할 */
+    flex-grow: 1; /* 다른 요소들을 제외한 모든 세로 공간을 차지 */
     min-height: 0;
 }
 
-.altitude-widget .widget-content {
-    padding-bottom: 5px; 
+/* 캔버스는 wrapper에 꽉 차도록 설정 */
+#altitude-chart, #acceleration-chart {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
-.acceleration-widget .widget-content {
-    padding-top: 20px; 
+/* --- 위젯 하단 데이터 패널 스타일 --- */
+.altitude-data, .acceleration-data {
+    display: grid;
+    gap: 10px;
+    background-color: var(--panel-bg);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #D1D5DB;
+    margin-top: 15px;
+    flex-shrink: 0; /* 이 패널은 줄어들지 않음 */
 }
 
-.chart-placeholder {
-    background-color: #fff; 
-    border: 1px dashed #CBD5E0;
-    border-radius: 6px; 
-    min-height: 180px;
-}
-
-/* --- 고도 위젯 하단 데이터 패널 --- */
 .altitude-data {
-    display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 3px;
-    background-color: var(--panel-bg);
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #D1D5DB;
-    margin-top: 3px;
 }
-
-.altitude-data .data-item {
-    text-align: center;
-}
-
-.altitude-data .value {
-    font-size: 16px;
-}
-
 .acceleration-data {
-    display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 3px;
-    background-color: var(--panel-bg);
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #D1D5DB;
-    margin-top: 3px;
 }
 
-.altitude-data .data-item {
+.altitude-data .data-item,
+.acceleration-data .data-item {
     text-align: center;
 }
 
-.altitude-data .value {
+.altitude-data .value,
+.acceleration-data .value {
     font-size: 16px;
 }
 
 /* --- 최고 고도 --- */
 .max-altitude { 
-    margin-top: 20px; 
+    margin-top: 15px; 
     border-top: 1px solid var(--border-color); 
-    padding-top: 10px; 
-    padding-bottom: 8px;
-}
-.altitude-widget .chart-placeholder {
-    flex-grow: 1;
+    padding-top: 10px;
+    flex-shrink: 0;
 }
 
 /* ==========================================================================

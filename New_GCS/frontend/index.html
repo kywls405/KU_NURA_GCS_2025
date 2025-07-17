@@ -12,6 +12,10 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 </head>
 <body>
   <div class="gcs-container">
@@ -93,7 +97,9 @@
         <section class="widget altitude-widget">
           <h2 class="widget-header">Altitude</h2>
           <div class="widget-content">
-            <div class="chart-placeholder" id="altitude-chart"></div>
+            <div class="altitude-chart-wrapper">
+              <canvas id="altitude-chart"></canvas>
+            </div>
             <div class="altitude-data">
               <div class="data-item">
                 <span class="label">P_Alt</span>
@@ -115,7 +121,9 @@
         <section class="widget acceleration-widget">
           <h2 class="widget-header">Acceleration</h2>
           <div class="widget-content">
-            <div class="chart-placeholder" id="acceleration-chart"></div>
+            <div class="acceleration-chart-wrapper">
+              <canvas id="acceleration-chart"></canvas>
+            </div>
             <div class="acceleration-data">
               <div class="data-item">
                 <span class="label">Ax</span>

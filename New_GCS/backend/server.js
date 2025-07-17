@@ -35,14 +35,12 @@ const tcpServer = net.createServer(socket => {
 
   socket.on('data', data => {
     buffer += data.toString();
-
     const lines = buffer.split('\n');
     buffer = lines.pop(); // 마지막에 들어온 데이터는 완성되지 않았을 수 있으므로 버퍼에 남김
 
     for (const line of lines) {
       try {
         const json = JSON.parse(line);
-        // console.log('📡 Received from Python:', json); // 로그가 너무 많으면 주석 처리
         io.emit('rocketData', json); // socket.io로 브라우저에 전송
       } catch (err) {
         console.error('❌ JSON parse error:', err.message);
@@ -75,7 +73,7 @@ server.listen(WEB_PORT, () => {
 });
 
 // =======================================================================
-// ▼▼▼ [수정] 랜덤 데이터 생성 시뮬레이터 (전송 주기 분리) ▼▼▼
+// ▼▼▼ [수정] 랜덤 데이터 생성 시뮬레이터 (실제와 유사한 전송 간격) ▼▼▼
 // =======================================================================
 // 실제 Python 클라이언트와 연동할 때는 아래 startRandomDataEmitter() 호출부를 주석 처리하세요.
 
@@ -83,7 +81,7 @@ server.listen(WEB_PORT, () => {
 const telemetryState = {
     timestamp: 0,
     roll: 0, pitch: 0, yaw: 0,
-    p_alt: 0, alt: 0,
+    P_alt: 0, Alt: 0,
     ax: 0, ay: 0, az: 0,
     lat: 37.5408, lon: 127.0794,
     vel_n: 0, vel_e: 0, vel_d: 0,
@@ -95,32 +93,27 @@ let flightStartTime = Date.now();
 
 /**
  * 0.02초마다 자세 데이터(Roll, Pitch, Yaw)를 업데이트하고 전체 데이터를 전송합니다.
- * @param {Server} io - Socket.IO 서버 인스턴스
  */
 function startFastEmitter(io) {
     setInterval(() => {
-        // Roll, Pitch, Yaw 값을 1씩 수정
         telemetryState.roll += 1;
         telemetryState.pitch += 1;
         telemetryState.yaw += 1;
 
-        // 각도 범위 처리
         if (telemetryState.roll >= 180) telemetryState.roll = -180;
         if (telemetryState.pitch > 90) telemetryState.pitch = -90;
         if (telemetryState.yaw >= 360) telemetryState.yaw = 0;
 
-        // 비행 시간 업데이트
-        telemetryState.timestamp = Date.now() - flightStartTime;
+        // 비행 시간을 '초' 단위로 계산
+        telemetryState.timestamp = (Date.now() - flightStartTime) / 1000;
 
-        // 최신 상태를 모든 클라이언트에 전송
-        // toFixed()를 적용하여 문자열로 변환 후 전송
         const dataToSend = {
             ...telemetryState,
             roll: telemetryState.roll.toFixed(2),
             pitch: telemetryState.pitch.toFixed(2),
             yaw: telemetryState.yaw.toFixed(2),
-            p_alt: telemetryState.p_alt.toFixed(2),
-            alt: telemetryState.alt.toFixed(2),
+            P_alt: telemetryState.P_alt.toFixed(2),
+            Alt: telemetryState.Alt.toFixed(2),
             ax: telemetryState.ax.toFixed(3),
             ay: telemetryState.ay.toFixed(3),
             az: telemetryState.az.toFixed(3),
@@ -135,16 +128,15 @@ function startFastEmitter(io) {
 }
 
 /**
- * 1초마다 자세를 제외한 나머지 데이터를 업데이트합니다.
- * (데이터를 직접 보내지 않고, telemetryState 객체의 값만 수정합니다)
+ * [수정] 불규칙한 간격으로 나머지 데이터를 업데이트합니다.
  */
 function startSlowUpdater() {
-    setInterval(() => {
+    const update = () => {
         // 고도 업데이트
-        let baseAltitude = telemetryState.alt + Math.random() * 100; // 변화량 증가
-        if (baseAltitude > 5000) baseAltitude = 0;
-        telemetryState.alt = baseAltitude;
-        telemetryState.p_alt = (baseAltitude + (Math.random() - 0.5) * 10);
+        let baseAltitude = telemetryState.Alt + Math.random() * 10;
+        if (baseAltitude > 400) baseAltitude = 0;
+        telemetryState.Alt = baseAltitude + 80;
+        telemetryState.P_alt = (baseAltitude + (Math.random() - 0.5) * 10);
 
         // GPS 좌표 업데이트
         telemetryState.lat += (Math.random() - 0.5) * 0.00005;
@@ -166,15 +158,19 @@ function startSlowUpdater() {
         else if (baseAltitude > 3000) ejectionStatus = 1;
         telemetryState.ejection = ejectionStatus;
 
-    }, 1000); // 1000ms = 1초
+        // [수정] 다음 업데이트를 800ms ~ 1200ms 사이의 무작위 시간 후에 예약합니다.
+        const randomDelay = 600 + Math.random() * 200;
+        setTimeout(update, randomDelay);
+    };
+    
+    update(); // 첫 업데이트를 즉시 시작
 }
 
 /**
  * 데이터 전송 시뮬레이터를 시작하는 메인 함수
- * @param {Server} io - Socket.IO 서버 인스턴스
  */
 function startRandomDataEmitter(io) {
-    console.log('✅ [수정] 데이터 전송 시뮬레이터를 시작합니다 (자세: 20ms, 기타: 1000ms).');
+    console.log('✅ [수정] 실제와 유사한 데이터 전송 시뮬레이터를 시작합니다.');
     flightStartTime = Date.now();
     startFastEmitter(io); // 빠른 전송기 시작
     startSlowUpdater();   // 느린 업데이트 시작
