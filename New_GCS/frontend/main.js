@@ -67,9 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let className = 'status-danger';
     switch (status) {
       case 0: text = 'SAFE';             className = 'status-safe';     break;
-      case 1: text = 'ATTITUDE EJECTED'; className = 'status-attitude'; break;
-      case 2: text = 'ALTITUDE EJECTED'; className = 'status-altitude'; break;
-      case 3: text = 'TIMER EJECTED';    className = 'status-timer';    break;
+      case 1: text = 'ATTITUDE CAUTION'; className = 'status-attitude'; break;
+      case 2: text = 'ALTITUDE CAUTION'; className = 'status-altitude'; break;
+      case 3: text = 'TIME CAUTION';    className = 'status-timer';    break;
     }
     elem.dataset.text = `${status}`;
     elem.innerHTML = `<span class="main-text">${text}</span>`;
