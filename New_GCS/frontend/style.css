@@ -302,10 +302,10 @@ p {
 .ejection-box .value#ejection {
   position: relative; /* 자식과 ::after 요소의 기준점 */
   font-size: 22px;
-
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
 }
 
 /* 실제 눈에 보이는 주 텍스트를 감싸는 span */
