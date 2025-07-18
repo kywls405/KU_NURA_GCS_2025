@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url';
  * - 실제 데이터 모드: const isSimulateMode = false;
  * =================================================================
  */
-const isSimulateMode = false; // <-- 이 값을 true/false로 변경하세요.
+const isSimulateMode = true; // <-- 이 값을 true/false로 변경하세요.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,7 +112,7 @@ if (isSimulateMode) {
       }
 
       io.emit('rocketData', { ...telemetryState });
-    }, 20);
+    }, 200);
   }
 
   function startSlowUpdater() {
