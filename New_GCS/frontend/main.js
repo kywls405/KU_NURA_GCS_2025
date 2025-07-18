@@ -43,9 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateLocalTime() {
     const now = new Date();
     uiElements.time.textContent =
-      `${String(now.getHours()).padStart(2,'0')}:` +
-      `${String(now.getMinutes()).padStart(2,'0')}:` +
-      `${String(now.getSeconds()).padStart(2,'0')}`;
+      `${String(now.getHours()).padStart(2, '0')}:` +
+      `${String(now.getMinutes()).padStart(2, '0')}:` +
+      `${String(now.getSeconds()).padStart(2, '0')}`;
   }
   setInterval(updateLocalTime, 1000);
   updateLocalTime();
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
       case 0: text = 'SAFE';             className = 'status-safe';     break;
       case 1: text = 'ATTITUDE CAUTION'; className = 'status-attitude'; break;
       case 2: text = 'ALTITUDE CAUTION'; className = 'status-altitude'; break;
-      case 3: text = 'TIME CAUTION';    className = 'status-timer';    break;
+      case 3: text = 'TIME CAUTION';     className = 'status-timer';    break;
     }
     elem.dataset.text = `${status}`;
     elem.innerHTML = `<span class="main-text">${text}</span>`;
@@ -77,21 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
     elem.classList.add(className);
   }
 
-  function calculatePlanarAngle(pitchDeg, yawDeg) {
-    const p = pitchDeg * Math.PI/180;
-    const y = yawDeg   * Math.PI/180;
-    const x = Math.cos(p)*Math.sin(y);
-    const vY = Math.cos(p)*Math.cos(y);
-    const mag = Math.hypot(x, vY);
-    const cosφ = mag > 0 ? vY/mag : 1;
-    return Math.acos(Math.max(-1, Math.min(1, cosφ))) * 180/Math.PI;
+  // [수정] 함수의 역할을 명확히 하도록 이름 변경 (calculatePlanarAngle -> calculateTiltMagnitude)
+  function calculateTiltMagnitude(pitch, roll) {
+    // 로켓의 수직 자세로부터의 기울기 크기를 계산
+    const tiltDeg = Math.sqrt(Math.pow(roll, 2) + Math.pow(pitch, 2));
+    return tiltDeg;
   }
 
   function updateDashboard(data) {
     if (!data) return;
 
     // 1) 비행 시간 계산 & ejection 상태 고정
-    const serverTs = parseFloat(data.timestamp);
+    const serverTs = Number(data.timestamp);
     if (clientFlightStartTime === null && !isNaN(serverTs)) {
       clientFlightStartTime = serverTs;
     }
@@ -100,51 +97,45 @@ document.addEventListener('DOMContentLoaded', () => {
     uiElements.flightTime.textContent = formatFlightTime(flightMs);
 
     if (clientEjectionStatus === 0) {
-      const altNum    = parseFloat(data.Alt);
-      const angle2d   = calculatePlanarAngle(
-                          parseFloat(data.pitch),
-                          parseFloat(data.yaw)
-                        );
-      if (angle2d > 70)   clientEjectionStatus = 1;
-      if (altNum > 400)   clientEjectionStatus = 2;
-      if (flightSeconds > 60) clientEjectionStatus = 3;
+      const altNum    = Number(data.Alt);
+      // [수정] 변경된 함수 이름 사용
+      const tiltAngle = calculateTiltMagnitude(data.pitch, data.roll);
+      
+      if (tiltAngle > 70)      clientEjectionStatus = 1; // 자세 경고
+      if (altNum > 400)        clientEjectionStatus = 2; // 고도 경고
+      if (flightSeconds > 60)  clientEjectionStatus = 3; // 시간 경고
     }
     updateEjectionStatus(clientEjectionStatus);
 
     // 2) UI 필드 업데이트
-    uiElements.roll.textContent    = `${data.roll}°`;
-    uiElements.pitch.textContent   = `${data.pitch}°`;
-    uiElements.yaw.textContent     = `${data.yaw}°`;
-    uiElements.p_alt.textContent   = `${data.P_alt} m`;
-    uiElements.alt.textContent     = `${data.Alt} m`;
+    // [수정] .toFixed()를 사용하여 모든 숫자 데이터의 표시 형식을 통일
+    uiElements.roll.textContent      = `${Number(data.roll).toFixed(2)}°`;
+    uiElements.pitch.textContent     = `${Number(data.pitch).toFixed(2)}°`;
+    uiElements.yaw.textContent       = `${Number(data.yaw).toFixed(2)}°`;
+    uiElements.p_alt.textContent     = `${Number(data.P_alt).toFixed(2)} m`;
+    uiElements.alt.textContent       = `${Number(data.Alt).toFixed(2)} m`;
 
-    const altNum = parseFloat(data.Alt);
+    const altNum = Number(data.Alt);
     if (!isNaN(altNum) && altNum > maxAltitude) {
       maxAltitude = altNum;
     }
-    uiElements.max_alt.textContent = `${maxAltitude.toFixed(2)} m`;
+    uiElements.max_alt.textContent   = `${maxAltitude.toFixed(2)} m`;
 
-    uiElements.ax.textContent      = `${data.ax} m/s²`;
-    uiElements.ay.textContent      = `${data.ay} m/s²`;
-    uiElements.az.textContent      = `${data.az} m/s²`;
-    uiElements.lat.textContent     = `${data.lat.toFixed(7)}° N`;
-    uiElements.lon.textContent     = `${data.lon.toFixed(7)}° E`;
-    uiElements.vel_n.textContent   = `${data.vel_n} m/s`;
-    uiElements.vel_e.textContent   = `${data.vel_e} m/s`;
-    uiElements.vel_d.textContent   = `${data.vel_d} m/s`;
-    uiElements.temp.textContent    = `${data.temp} °C`;
-    uiElements.pressure.textContent= `${data.pressure} hPa`;
+    uiElements.ax.textContent        = `${Number(data.ax).toFixed(2)} m/s²`;
+    uiElements.ay.textContent        = `${Number(data.ay).toFixed(2)} m/s²`;
+    uiElements.az.textContent        = `${Number(data.az).toFixed(2)} m/s²`;
+    uiElements.lat.textContent       = `${Number(data.lat).toFixed(7)}° N`;
+    uiElements.lon.textContent       = `${Number(data.lon).toFixed(7)}° E`;
+    uiElements.vel_n.textContent     = `${Number(data.vel_n).toFixed(2)} m/s`;
+    uiElements.vel_e.textContent     = `${Number(data.vel_e).toFixed(2)} m/s`;
+    uiElements.vel_d.textContent     = `${Number(data.vel_d).toFixed(2)} m/s`;
+    uiElements.temp.textContent      = `${Number(data.temp).toFixed(2)} °C`;
+    uiElements.pressure.textContent  = `${Number(data.pressure).toFixed(2)} hPa`;
 
     // 3) 컴포넌트 업데이트
-    updateNavball(
-      parseFloat(data.roll),
-      parseFloat(data.pitch),
-      parseFloat(data.yaw)
-    );
-    updateRocketAttitude(
-      parseFloat(data.pitch),
-      parseFloat(data.yaw)
-    );
+    // [수정] 데이터가 이미 숫자 타입이므로 불필요한 parseFloat 제거
+    updateNavball(data.roll, data.pitch, data.yaw);
+    updateRocketAttitude(data.pitch, data.roll);
     updateMap(data.lat, data.lon, uiElements.flightTime.textContent);
     updateCharts(data);
   }

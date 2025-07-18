@@ -19,3 +19,11 @@ taskkill /F /PID 12345
 [SUCCESS] 메시지가 뜨면 정상적으로 종료된 것입니다.
 
 이제 다시 node server.js 명령어로 서버를 실행하면 정상적으로 작동할 것입니다.
+
+///////////////////////////////////////////////////////////////////////
+
+PS C:\Users\yati0\OneDrive\Desktop\KU\ASEC\2025_NURA_GCS\New_GCS\backend> node server.js // 서버 오픈
+
+PS C:\Users\yati0\OneDrive\Desktop\KU\ASEC\2025_NURA_GCS\New_GCS\python_bridge> python decoder_main.py // 시리얼 포트 오픈
+
+!! decoder_main.py + decoder.py 에 시리얼 포트 "COM11" 값은 장치관리자에서 확인 후 설정

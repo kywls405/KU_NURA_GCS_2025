@@ -22,15 +22,23 @@ export function initNavball() {
   // 원인: 구체의 크기(반지름 5)가 카메라 시야에 비해 너무 컸습니다.
   // 해결: 구체의 반지름을 4로 줄여 캔버스 안에 완전히 들어오도록 조정합니다.
   // =======================================================================
-  const geometry = new THREE.SphereGeometry(4, 64, 64); // 반지름을 5 -> 4로 수정, 세밀도 증가
+  const geometry = new THREE.SphereGeometry(4, 64, 64);
 
   const texture = new THREE.TextureLoader().load('assets/navball.png');
-  texture.center.set(0.5, 0.5); // ★★★ 이 줄을 추가하세요! ★★★
 
-  const material = new THREE.MeshBasicMaterial({ map: texture });
+  // =======================================================================
+  // ▼▼▼ [수정] 텍스처 회전 문제 해결 ▼▼▼
+  // 원인: texture.center를 (0, 0)으로 설정하면 텍스처가 중심이 아닌 모서리를 기준으로 변형됩니다.
+  // 해결: 텍스처의 회전 중심을 (0.5, 0.5)로 설정하고, 
+  //      texture.rotation 속성을 이용해 90도만큼 회전시킵니다.
+  // =======================================================================
+  texture.center.set(0.5, 0.5);
+
+  const material = new THREE.MeshBasicMaterial({ map: texture });
   
   sphere = new THREE.Mesh(geometry, material);
   scene.add(sphere);
+
 
   // 카메라 위치를 z축 방향으로 7만큼 이동시킵니다.
   // 만약 그래픽이 여전히 크다면 이 값을 8이나 9로 늘려보세요.
@@ -63,6 +71,10 @@ export function updateNavball(roll, pitch, yaw) {
   sphere.rotation.x = pitchRad;
   sphere.rotation.y = yawRad;
   sphere.rotation.z = rollRad;
+
+//   sphere.rotation.x = 0;
+//   sphere.rotation.y = 0;
+//   sphere.rotation.z = 0;
 }
 
 /**

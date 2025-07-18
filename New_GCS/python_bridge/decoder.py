@@ -2,7 +2,7 @@ import serial
 import struct
 import enum
 
-from .data_struct import GpsData, ImuData
+from data_struct import GpsData, ImuData
 
 HEADER1 = 0xAA
 HEADER2 = 0xBB
@@ -109,7 +109,7 @@ class Decoder:
 
         elif self.msg_type == MsgID.GPS.value:
             # lon(I),lat(I),alt(H),ve(3h),fix(B)
-            payload_fmt = "<2IH3hB"
+            payload_fmt = "<3I3hB"
             unpacked_data = struct.unpack_from(payload_fmt, self.buf, payload_offset)
             
             self.gpsData.lon = unpacked_data[0]  / 1e7
@@ -123,7 +123,7 @@ class Decoder:
             self.new_gps_update = True
         
         elif self.msg_type == MsgID.IMU_GPS.value:
-            payload_fmt = "<12hHIH2IH3hBB" 
+            payload_fmt = "<12hHIH3I3hBB" 
             unpacked_data = struct.unpack_from(payload_fmt, self.buf, payload_offset)
             
             # IMU
@@ -164,7 +164,7 @@ class Decoder:
         return self.imuData
 
 if __name__ == "__main__":
-    port = "COM4"
+    port = "COM11"
     baudrate = 9600 # 수정 필요?
 
     ser = serial.Serial(port, baudrate)
