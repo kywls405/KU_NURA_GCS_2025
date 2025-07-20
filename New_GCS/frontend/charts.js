@@ -1,11 +1,9 @@
+// frontend/charts.js
+
 Chart.register(window.ChartZoom);
 
 let altitudeChart, accelerationChart;
-// [수정] 시간 기반 윈도우 대신 데이터 포인트 개수 제한
-const MAX_DATA_POINTS = 60; // 차트에 최대 500개의 데이터를 보여줌
-
-// 비행 시작 시간을 기록하기 위한 변수
-let flightStartTime = null;
+const MAX_DATA_POINTS = 500; // 차트에 최대 500개의 데이터를 보여줌 (값을 조금 늘렸습니다)
 
 /**
  * 차트의 공통 설정을 생성하는 헬퍼 함수
@@ -61,27 +59,25 @@ function createChartOptions(xAxisLabel, yAxisLabel, yMin, yMax, yStepSize) {
     animation: false,
     elements: {
         line: {
-            tension: 0
+            tension: 0.1 // 선을 약간 부드럽게
         },
         point: {
-            radius: 0
+            radius: 1.5 // 데이터 포인트를 작게 표시
         }
     }
   };
 }
 
 /**
- * 고도 및 가속도 차트를 초기화하는 함수
+ * 고도 및 가속도 차트를 초기화하고 리셋하는 함수
  */
 export function initCharts() {
-  flightStartTime = null;
-
   const altOptions = createChartOptions('Flight Time (s)', 'Altitude (m)', 0, 500, 100);
-  // [수정] 정적인 x축 범위 설정을 제거하여 데이터에 따라 자동으로 조절되도록 함
-  // altOptions.scales.x.min = 0;
-  // altOptions.scales.x.max = TIME_WINDOW_SECONDS;
-
   const altCtx = document.getElementById('altitude-chart').getContext('2d');
+  
+  if (altitudeChart) {
+    altitudeChart.destroy(); // 기존 차트가 있으면 파괴
+  }
   altitudeChart = new Chart(altCtx, {
     type: 'line',
     data: { datasets: [
@@ -92,11 +88,11 @@ export function initCharts() {
   });
 
   const accelOptions = createChartOptions('Flight Time (s)', 'Acceleration (m/s²)', -40, 40, 10);
-  // [수정] 정적인 x축 범위 설정을 제거하여 데이터에 따라 자동으로 조절되도록 함
-  // accelOptions.scales.x.min = 0;
-  // accelOptions.scales.x.max = TIME_WINDOW_SECONDS;
-
   const accelCtx = document.getElementById('acceleration-chart').getContext('2d');
+
+  if (accelerationChart) {
+    accelerationChart.destroy(); // 기존 차트가 있으면 파괴
+  }
   accelerationChart = new Chart(accelCtx, {
     type: 'line',
     data: { datasets: [
@@ -109,53 +105,41 @@ export function initCharts() {
 }
 
 /**
- * 차트에 새로운 데이터를 추가하고, 오래된 데이터는 제거하는 함수 (슬라이딩 윈도우)
+ * 차트에 새로운 데이터를 추가하고, 오래된 데이터는 제거하는 함수
  */
-function addDataToChart(chart, timestamp, data) {
+function addDataToChart(chart, flightTimestamp, data) {
   chart.data.datasets.forEach(dataset => {
-    const key = dataset.label;
-    const value = data.hasOwnProperty(key) ? parseFloat(data[key]) : null;
-    dataset.data.push({ x: timestamp, y: value });
+    // 키 이름 불일치 문제 해결 (accelData의 키는 'Ax'이지만 data에는 'ax'로 들어옴)
+    const key_map = { 'P_alt': 'P_alt', 'Alt': 'Alt', 'Ax': 'ax', 'Ay': 'ay', 'Az': 'az'};
+    const dataKey = key_map[dataset.label];
+    
+    if (data.hasOwnProperty(dataKey)) {
+      const value = parseFloat(data[dataKey]);
+      dataset.data.push({ x: flightTimestamp, y: value });
 
-    // [핵심] 데이터 포인트가 MAX_DATA_POINTS를 초과하면 가장 오래된 데이터 제거
-    if (dataset.data.length > MAX_DATA_POINTS) {
-      dataset.data.shift();
+      if (dataset.data.length > MAX_DATA_POINTS) {
+        dataset.data.shift();
+      }
     }
   });
 }
 
 /**
- * 수신된 데이터로 해당 차트만 업데이트하는 함수
+ * 수신된 데이터로 차트를 업데이트하는 함수
  */
 export function updateCharts(data) {
-  if (!altitudeChart || !accelerationChart) return;
+  if (!altitudeChart || !accelerationChart || !data) return;
 
-  const serverTimestamp = parseFloat(data.timestamp);
-  if (isNaN(serverTimestamp)) return;
-
-  if (flightStartTime === null) {
-    flightStartTime = serverTimestamp;
-    altitudeChart.data.datasets.forEach(d => d.data = []);
-    accelerationChart.data.datasets.forEach(d => d.data = []);
+  // [핵심 수정] launch 신호가 오고, flight_timestamp가 0보다 클 때만 차트 업데이트
+  if (data.launch !== 1 || data.flight_timestamp <= 0) {
+    return; // 조건 미충족 시 아무것도 그리지 않음
   }
 
-  const relativeTimestamp = serverTimestamp - flightStartTime;
-
-  // [삭제] 수동으로 X축을 스크롤하던 로직을 제거합니다.
-  // 데이터 자체가 윈도우 크기를 유지하므로 차트가 자동으로 범위를 조절합니다.
+  const flightTimestamp = data.flight_timestamp;
 
   // --- 데이터 추가 ---
-  const hasAltitudeData = data.hasOwnProperty('P_alt') || data.hasOwnProperty('Alt');
-  if (hasAltitudeData) {
-    const altitudeData = { P_alt: data.P_alt, Alt: data.Alt };
-    addDataToChart(altitudeChart, relativeTimestamp, altitudeData);
-  }
-
-  const hasAccelData = data.hasOwnProperty('ax') || data.hasOwnProperty('ay') || data.hasOwnProperty('az');
-  if (hasAccelData) {
-    const accelData = { Ax: data.ax, Ay: data.ay, Az: data.az };
-    addDataToChart(accelerationChart, relativeTimestamp, accelData);
-  }
+  addDataToChart(altitudeChart, flightTimestamp, data);
+  addDataToChart(accelerationChart, flightTimestamp, data);
  
   // --- 차트 업데이트 ---
   altitudeChart.update('none');

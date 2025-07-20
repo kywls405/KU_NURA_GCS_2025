@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 
-  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -19,19 +19,50 @@
 </head>
 <body>
   <div class="gcs-container">
+    <div id="ejected-overlay" class="hidden">EJECTED</div>
+
     <header class="page-header">
       <div class="logo-group">
         <img src="assets/CommunicationMark_Eng.png" alt="Konkuk University Logo" class="logo" />
         <img src="assets/Asec_Symbol.png" alt="ASEC Logo" class="logo" />
       </div>
-      <div class="timers-group">
-        <div class="mission-timer">
-          <span class="label">TIME</span>
-          <span class="value telemetry-font" id="time">08:12:45</span>
+
+      <div class="header-right-panel">
+        <div class="timers-group">
+          <div class="mission-timer">
+            <span class="label">TIME</span>
+            <span class="value telemetry-font" id="time">00:00:00</span>
+          </div>
+          <div class="mission-timer">
+            <div class="label-with-status">
+              <span class="status-indicator" id="connection-status"></span> 
+              <span class="label">CONNECTED TIME</span>
+            </div>
+            <span class="value telemetry-font" id="connected-time">00:00:00</span>
+          </div>
+          <div class="mission-timer">
+            <span class="label">FLIGHT TIME</span>
+            <span class="value telemetry-font" id="flight-time">T+ 00:00:00</span>
+          </div>
         </div>
-        <div class="mission-timer">
-          <span class="label">FLIGHT TIME</span>
-          <span class="value telemetry-font" id="flight-time">T+ 00:00:00</span>
+
+        <div class="connection-control-panel">
+          <div class="control-group">
+            <label for="port-select" class="control-label">PORT</label>
+            <div class="port-selector-group">
+              <select id="port-select" class="port-select-dropdown"></select>
+              <button id="refresh-ports-btn" class="btn-icon">🔄</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <label for="baud-input" class="control-label">BAUD</label>
+            <input type="text" id="baud-input" value="9600" placeholder="예: 9600">
+          </div>
+          <div class="control-group button-group">
+            <button id="connect-btn" class="btn btn-primary">연결</button>
+            <button id="disconnect-btn" class="btn btn-secondary">종료</button>
+          </div>
+          <div id="status-display" class="status-error">연결되지 않음</div>
         </div>
       </div>
     </header>
@@ -40,7 +71,13 @@
 
     <main class="dashboard-grid">
       <section class="widget status-widget">
-        <h2 class="widget-header">Current Status</h2>
+        <h2 class="widget-header">
+          <div class="header-status-indicator">
+            <span class="status-indicator" id="launch-status-indicator"></span>
+            <span>LAUNCH</span>
+          </div>
+          <span class="widget-title">Current Status</span>
+        </h2>
         <div class="widget-content">
           <div class="status-layout-grid">
             <div class="attitude-main-panel">
@@ -187,7 +224,7 @@
       </div>
     </main>
   </div>
-
+  
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="./main.js"></script>
 

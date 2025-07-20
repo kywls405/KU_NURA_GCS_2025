@@ -1,24 +1,25 @@
+# data_struct.py
+from dataclasses import dataclass, field
+from typing import List
+
+@dataclass
 class GpsData:
-    def __init__(self):
-        self.lon = 0.0
-        self.lat = 0.0
-        self.Alt = 0.0
+    lon: float = 0.0
+    lat: float = 0.0
+    Alt: float = 0.0
+    velN: float = 0.0
+    velE: float = 0.0
+    velD: float = 0.0
+    fixType: int = 0
 
-        self.velN = 0.0
-        self.velE = 0.0
-        self.velD = 0.0
-        
-        self.fixType = 0
-
-
+@dataclass
 class ImuData:
-    def __init__(self):
-        self.acc = [0.0, 0.0, 0.0]
-        self.gyro = [0.0, 0.0, 0.0]
-        self.mag = [0.0, 0.0, 0.0]
-        self.euler = [0.0, 0.0, 0.0]
-        self.temperature = 0
-        self.pressure = 0
-        self.P_alt = 0
-
-        self.ejection = 0  # 0: 기본 1: 자세사출 2: 고도사출 3: 타이머사출
+    acc: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    gyro: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    mag: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    euler: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    temperature: float = 0.0
+    pressure: float = 0.0
+    P_alt: float = 0.0
+    ejection: int = 0
+    launch: int = 0 # <-- launch 필드 추가
