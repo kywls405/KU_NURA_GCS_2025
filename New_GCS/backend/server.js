@@ -51,43 +51,38 @@ if (isSimulateMode) {
   let slowUpdaterTimeout = null;
   let launchDetectTimeout = null;
 
-  // [개선] 자세 시뮬레이션 및 사출 조건 확인 로직
   function updateAttitudeAndCheckEjection() {
-    if (!flightStartTime) { // 발사 전에는 안정적으로 유지
+    if (!flightStartTime) {
         telemetryState.roll *= 0.95;
         telemetryState.pitch *= 0.95;
         return;
     }
     
-    // 자연스러운 흔들림 추가
     telemetryState.roll += (Math.random() - 0.5) * 0.5;
     telemetryState.pitch += (Math.random() - 0.5) * 0.5;
     telemetryState.yaw = (telemetryState.yaw + simulatorDirection.yaw * 0.1 + 360) % 360;
 
-    // 낮은 확률로 큰 충격 발생
     if (Math.random() < 0.002) {
         console.log('💥 SIMULATING: High G-Force Event!');
         telemetryState.roll += (Math.random() - 0.5) * 200;
         telemetryState.pitch += (Math.random() - 0.5) * 200;
     }
 
-    // 자세 안정화 경향
     telemetryState.roll *= 0.99;
     telemetryState.pitch *= 0.99;
 
-    // 기울기 계산
     const tiltAngle = Math.sqrt(telemetryState.roll**2 + telemetryState.pitch**2);
 
-    // 사출 조건 1: 기울기 70도 초과
     if (tiltAngle > 70 && telemetryState.ejection === 0) {
-        console.log(`🚀 EJECTION TRIGGER (Attitude): Tilt ${tiltAngle.toFixed(2)}°`);
+        const message = `사출 명령 (1): ${tiltAngle.toFixed(2)}°`;
+        console.log(`🚀 ${message}`);
+        io.emit('serial-status-update', { status: 'error', message: message });
         telemetryState.ejection = 1;
     }
   }
 
   function startFastEmitter(io) {
     fastEmitterInterval = setInterval(() => {
-      // [개선] 자세 계산 로직을 별도 함수로 분리
       updateAttitudeAndCheckEjection();
 
       if (connectStartTime) {
@@ -103,34 +98,33 @@ if (isSimulateMode) {
 
   function startSlowUpdater() {
     const update = () => {
-      // 사출이 발생하면 더 이상 상승하지 않음
       if (telemetryState.ejection > 0) {
-        // 사출 후 하강 로직
         telemetryState.vel_d = 20 + Math.random() * 5;
         telemetryState.Alt -= telemetryState.vel_d;
       } else {
-        // 정상 상승 로직
         telemetryState.Alt += (Math.random() * 5 + 5);
       }
       
       let baseAltitude = telemetryState.Alt;
 
-      // 사출 조건 2: 고도 400m 초과
       if (baseAltitude > 400 && telemetryState.ejection === 0) {
-          console.log(`🚀 EJECTION TRIGGER (Altitude): ${baseAltitude.toFixed(2)}m`);
+          const message = `사출 명령 (2): ${baseAltitude.toFixed(2)}m`;
+          console.log(`🚀 ${message}`);
+          io.emit('serial-status-update', { status: 'error', message: message });
           telemetryState.ejection = 2;
       }
 
-      // 사출 조건 3: 비행 시간 60초 초과
       if (telemetryState.flight_timestamp > 60 && telemetryState.ejection === 0) {
-          console.log(`🚀 EJECTION TRIGGER (Time): ${telemetryState.flight_timestamp.toFixed(2)}s`);
+          const message = `사출 명령 (3): ${telemetryState.flight_timestamp.toFixed(2)}초`;
+          console.log(`🚀 ${message}`);
+          io.emit('serial-status-update', { status: 'error', message: message });
           telemetryState.ejection = 3;
       }
       
       if (flightStartTime && baseAltitude <= 0) {
           console.log('🛬 Flight simulation finished (Landed).');
-          io.emit('serial-status-update', { status: 'success', message: '비행 종료 (착륙)' });
-          stopSimulator();
+          io.emit('serial-status-update', { status: 'success', message: '착륙. 비행이 종료되었습니다.' });
+          if (slowUpdaterTimeout) clearTimeout(slowUpdaterTimeout);
           return;
       }
 
@@ -151,17 +145,15 @@ if (isSimulateMode) {
   }
   
   startSimulator = function(io) {
-    console.log('✅ Connection successful. Simulation will start randomly between 5-10 seconds.');
-    io.emit('serial-status-update', { status: 'success', message: '연결 성공. 5~10초 후 랜덤으로 비행 시작' });
+    io.emit('serial-status-update', { status: 'success', message: '연결 성공. 5~10초 후 비행이 시작됩니다.' });
     
     connectStartTime = Date.now();
     startFastEmitter(io);
     
     const randomLaunchDelay = Math.random() * 5000 + 5000;
-    console.log(`🚀 Launching in ${(randomLaunchDelay / 1000).toFixed(2)} seconds...`);
+    io.emit('serial-status-update', { status: 'info', message: `발사 시퀀스 시작. T-${(randomLaunchDelay / 1000).toFixed(2)}초` });
 
     launchDetectTimeout = setTimeout(() => {
-      console.log('🚀 Launch detected!');
       io.emit('serial-status-update', { status: 'success', message: '발사 감지됨' });
       telemetryState.launch = 1;
       flightStartTime = Date.now();
@@ -182,7 +174,7 @@ if (isSimulateMode) {
 
     telemetryState = { ...initialTelemetryState };
 
-    io.emit('serial-status-update', { status: 'error', message: '시뮬레이션이 중지/초기화되었습니다.' });
+    io.emit('serial-status-update', { status: 'error', message: '시뮬레이션이 중지 및 초기화되었습니다.' });
     console.log('✅ Simulation stopped and states reset.');
   }
 }
@@ -228,7 +220,7 @@ io.on('connection', socket => {
 
   socket.on('request-serial-ports', () => {
     if (isSimulateMode) {
-      const fakePorts = [{ device: 'SIMULATOR', description: 'GCS Internal Simulator' }];
+      const fakePorts = [{ device: 'SIMULATOR', description: 'GCS 내부 시뮬레이터' }];
       socket.emit('serial-ports-list', fakePorts);
       return;
     }

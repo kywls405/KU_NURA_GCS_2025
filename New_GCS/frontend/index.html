@@ -19,7 +19,8 @@
 </head>
 <body>
   <div class="gcs-container">
-    <div id="ejected-overlay" class="hidden">EJECTED</div>
+    <!-- [핵심 수정] 오버레이를 gcs-container 안으로 이동 -->
+    <div id="ejected-overlay" class="hidden">!!EJECTED!!</div>
 
     <header class="page-header">
       <div class="logo-group">
@@ -217,8 +218,6 @@
         <section class="widget event-log-widget">
           <h2 class="widget-header">Event Log</h2>
           <div class="widget-content event-log-content" id="event-log">
-            <p><span class="log-time">07:43:30</span> <span class="log-system">[SYSTEM]</span> GCS Initialized.</p>
-            <p><span class="log-time">07:43:31</span> <span class="log-info">[INFO]</span> Awaiting telemetry...</p>
           </div>
         </section>
       </div>

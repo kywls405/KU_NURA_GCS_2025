@@ -745,6 +745,52 @@ p {
     color: #9CA3AF; 
 }
 
+.log-error {
+    color: #F87171; /* 에러는 밝은 빨간색 */
+}
+
+/* --- 이벤트 로그 위젯 --- */
+.event-log-widget { 
+    flex: 1 1 0; 
+    min-height: 200px; 
+    display: flex; 
+    flex-direction: column; 
+}
+
+.event-log-content {
+    background-color: var(--text-primary);
+    color: #F7FAFC;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    border-radius: 0 0 11px 11px;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px 20px; /* 패딩 약간 조정 */
+}
+
+.event-log-content p { 
+    margin: 0;
+    line-height: 1.8; /* 줄 간격 추가 */
+}
+
+.log-time { 
+    color: var(--accent-orange); 
+    margin-right: 10px; 
+}
+
+.log-system { 
+    color: #63B3ED; 
+}
+
+.log-info { 
+    color: #9CA3AF; 
+}
+
+/* [추가] 에러 로그를 위한 색상 스타일 */
+.log-error {
+    color: #F87171; /* 밝은 빨간색 */
+}
+
 /* ==========================================================================
    7. EJECTED 오버레이 스타일
    ========================================================================== */
@@ -776,7 +822,10 @@ p {
 #ejected-overlay.ejected-background {
     background-color: transparent;
     color: rgba(211, 47, 47, 0.8);
-    opacity: 0.1;
+    font-size: 25vw;
+    font-weight: bold;
+    transition: opacity 0.4s ease, color 0.7s ease-in-out;
+    /* cursor: not-allowed; */
     z-index: 1; /* 맨 뒤로 갈 때 */
 }
 

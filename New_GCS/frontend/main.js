@@ -41,9 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
     temp:             document.getElementById('temp'),
     pressure:         document.getElementById('pressure'),
     ejection:         document.getElementById('ejection'),
-    // [수정] 새로운 ID로 변경
     launchIndicator:  document.getElementById('launch-status-indicator'),
     ejectedOverlay:   document.getElementById('ejected-overlay'),
+    eventLog:         document.getElementById('event-log'),
   };
 
   // --- 전역 변수 ---
@@ -51,10 +51,56 @@ document.addEventListener('DOMContentLoaded', () => {
   let clientEjectionCautionStatus = 0;
   let isEjected = false;
   let lastChartUpdateTime = 0;
+  let apogeeLogged = false;
 
   const socket = io();
 
   // --- 함수 정의 ---
+
+  function addLogMessage(message, type = 'info') {
+    if (!uiElements.eventLog) return;
+
+    const now = new Date();
+    const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+    const logEntry = document.createElement('p');
+    
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'log-time';
+    timeSpan.textContent = timeString;
+
+    const typeSpan = document.createElement('span');
+    let typeText = '[INFO]';
+    let typeClass = 'log-info';
+
+    switch (type) {
+        case 'success':
+            typeText = '[SYSTEM]';
+            typeClass = 'log-system';
+            break;
+        case 'error':
+            typeText = '[ERROR]';
+            typeClass = 'log-error';
+            break;
+        case 'system':
+            typeText = '[SYSTEM]';
+            typeClass = 'log-system';
+            break;
+        default: // 'info'
+            typeText = '[INFO]';
+            typeClass = 'log-info';
+            break;
+    }
+    typeSpan.className = typeClass;
+    typeSpan.textContent = typeText;
+
+    logEntry.appendChild(timeSpan);
+    logEntry.appendChild(typeSpan);
+    logEntry.append(` ${message}`);
+
+    uiElements.eventLog.appendChild(logEntry);
+    uiElements.eventLog.scrollTop = uiElements.eventLog.scrollHeight;
+  }
 
   function updateLocalTime() {
     const now = new Date();
@@ -101,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clientEjectionCautionStatus = 0;
     isEjected = false;
     lastChartUpdateTime = 0;
+    apogeeLogged = false;
     uiElements.flightTime.textContent = 'T+ 00:00:00';
     uiElements.connectedTime.textContent = '00:00:00';
     uiElements.max_alt.textContent = '0.00 m';
@@ -108,10 +155,13 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLaunchStatus(0);
     
     const overlay = uiElements.ejectedOverlay;
-    overlay.classList.remove('blinking');
+    overlay.classList.remove('blinking', 'ejected-background');
     overlay.classList.add('hidden');
 
     initCharts();
+
+    if(uiElements.eventLog) uiElements.eventLog.innerHTML = '';
+    addLogMessage('서버가 실행되었습니다.', 'system');
 
     console.log("Dashboard has been reset.");
   }
@@ -132,13 +182,10 @@ document.addEventListener('DOMContentLoaded', () => {
     elem.classList.add(className);
   }
 
-  // [수정] updateLaunchStatus 함수 수정
   function updateLaunchStatus(status) {
     const elem = uiElements.launchIndicator;
-    if (!elem) return; // 요소가 없으면 종료
-
-    elem.classList.remove('safe', 'launched'); // 기존 상태 클래스 제거
-
+    if (!elem) return;
+    elem.classList.remove('safe', 'launched');
     if (status === 1) {
       elem.classList.add('launched');
     } else {
@@ -164,12 +211,12 @@ document.addEventListener('DOMContentLoaded', () => {
       updateEjectionStatus(data.ejection);
 
       const overlay = uiElements.ejectedOverlay;
-      
       overlay.classList.remove('hidden');
       overlay.classList.add('blinking');
 
       setTimeout(() => {
           overlay.classList.remove('blinking');
+          overlay.classList.add('ejected-background');
       }, 1500);
 
     } else if (!isEjected) {
@@ -192,8 +239,13 @@ document.addEventListener('DOMContentLoaded', () => {
     uiElements.alt.textContent       = `${Number(data.Alt).toFixed(2)} m`;
 
     const altNum = Number(data.Alt);
+    const isDescending = data.vel_d > 0;
+
     if (!isNaN(altNum) && altNum > maxAltitude) {
       maxAltitude = altNum;
+    } else if (isDescending && maxAltitude > 10 && !apogeeLogged) {
+      addLogMessage(`MAX Altitude: ${maxAltitude.toFixed(2)}m`, 'system');
+      apogeeLogged = true;
     }
     uiElements.max_alt.textContent   = `${maxAltitude.toFixed(2)} m`;
 
@@ -233,12 +285,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     resetDashboard();
+    addLogMessage(`${port}@${baud}로 연결 시도 중...`, 'info');
     socket.emit('connect-serial', { port, baud });
   });
 
   uiElements.disconnectButton.addEventListener('click', () => {
     socket.emit('disconnect-serial');
-    resetDashboard();
   });
   
   uiElements.refreshPortsBtn.addEventListener('click', () => {
@@ -256,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   socket.on('serial-status-update', (data) => {
     updateSerialStatus(data.status, data.message);
+    addLogMessage(data.message, data.status);
   });
   
   socket.on('serial-ports-list', (ports) => {
@@ -278,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   socket.on('disconnect', () => {
     updateSerialStatus('error', '서버와 연결이 끊겼습니다.');
+    addLogMessage('서버와의 연결이 끊겼습니다.', 'error');
   });
   
   // --- 초기화 및 주기적 실행 ---
@@ -286,6 +340,10 @@ document.addEventListener('DOMContentLoaded', () => {
   updateEjectionStatus(0);
   updateLaunchStatus(0);
   updateSerialStatus('error', '연결되지 않음');
+  
+  if(uiElements.eventLog) uiElements.eventLog.innerHTML = '';
+  addLogMessage('GCS가 초기화되었습니다.', 'system');
+  addLogMessage('원격 측정 데이터 수신 대기 중...', 'info');
   
   socket.emit('request-serial-ports');
 });
