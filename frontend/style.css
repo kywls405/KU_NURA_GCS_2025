@@ -741,6 +741,10 @@ p {
     color: #ffffff; 
 }
 
+.log-caution { 
+    color: #f0fb19ed; 
+}
+
 .log-success { 
     color: #63B3ED; 
 }
@@ -784,6 +788,10 @@ p {
 
 .log-system { 
     color: #ffffff; 
+}
+
+.log-caution { 
+    color: #f0fb19ed; 
 }
 
 .log-success { 

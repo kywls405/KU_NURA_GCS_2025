@@ -9,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 
-const isSimulateMode = true; // (true 시뮬레이터, false 실제 하드웨어 연결)
+const isSimulateMode = false; // (true 시뮬레이터, false 실제 하드웨어 연결)
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,7 +112,7 @@ if (isSimulateMode) {
       } else {
         telemetryState.Alt += (Math.random() * 5 + 25);
       }
-      
+
       if (telemetryState.Alt > 350) {
         telemetryState.Alt -= (Math.random() * 5 + 5);
       }
@@ -308,7 +308,7 @@ const tcpServer = net.createServer(clientSocket => {
     });
 
     clientSocket.on('close', () => console.log('🔌 Python TCP connection closed'));
-    clientSocket.on('error', err => console.error('⚠️ TCP socket error:', err.message));
+    clientSocket.on('error', err => console.error('⚠️ TCP socket error:', err.message)); 
 });
 
 tcpServer.listen(9000, '127.0.0.1', () => {

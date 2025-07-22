@@ -104,6 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
             typeText = '[SYSTEM]';
             typeClass = 'log-system';
             break;
+        case 'caution':
+            typeText = '[CAUTION]';
+            typeClass = 'log-caution';
+            break;
         default: // 'info'
             typeText = '[INFO]';
             typeClass = 'log-info';
@@ -287,9 +291,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            if (angle_caution) {addLogMessage('⚠️자세 경고(1)가 발생했습니다.', 'system'); clientEjectionCautionStatus = 1;}
-            else if (alt_caution) {addLogMessage('⚠️고도 경고(2)가 발생했습니다.', 'system'); clientEjectionCautionStatus = 2;}
-            else if (time_caution) {addLogMessage('⚠️시간 경고(3)가 발생했습니다.', 'system'); clientEjectionCautionStatus = 3;}
+            if (angle_caution) {addLogMessage('⚠️자세 경고(1)가 발생했습니다.', 'caution'); clientEjectionCautionStatus = 1;}
+            else if (alt_caution) {addLogMessage('⚠️고도 경고(2)가 발생했습니다.', 'caution'); clientEjectionCautionStatus = 2;}
+            else if (time_caution) {addLogMessage('⚠️시간 경고(3)가 발생했습니다.', 'caution'); clientEjectionCautionStatus = 3;}
         }
         updateEjectionStatus(clientEjectionCautionStatus);
     }
@@ -375,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('serial-status-update', (data) => {
     updateSerialStatus(data.status, data.message);
     const isConnectionLog = /연결|종료|중지/.test(data.message);
-    addLogMessage(data.message, data.status, isConnectionLog);
+    // addLogMessage(data.message, data.status, isConnectionLog);
   });
   
   socket.on('serial-ports-list', (ports) => {
