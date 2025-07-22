@@ -50,31 +50,39 @@ if (isSimulateMode) {
   let fastEmitterInterval = null;
   let slowUpdaterTimeout = null;
   let launchDetectTimeout = null;
+  
+  // [추가] 새로운 고도 사출 로직을 위한 변수
+  let altitudeBuffer = [];
+  let max_avg_alt = 0;
 
   function updateAttitudeAndCheckEjection() {
-    if (!flightStartTime) {
+    if (!flightStartTime) { // 발사 전에는 안정적으로 유지
         telemetryState.roll *= 0.95;
         telemetryState.pitch *= 0.95;
         return;
     }
     
+    // 자연스러운 흔들림 추가
     telemetryState.roll += (Math.random() - 0.5) * 0.5;
     telemetryState.pitch += (Math.random() - 0.5) * 0.5;
     telemetryState.yaw = (telemetryState.yaw + simulatorDirection.yaw * 0.1 + 360) % 360;
 
+    // 낮은 확률로 큰 충격 발생
     if (Math.random() < 0.002) {
         console.log('💥 SIMULATING: High G-Force Event!');
-        telemetryState.roll += (Math.random() - 0.5) * 100;
-        telemetryState.pitch += (Math.random() - 0.5) * 100;
+        telemetryState.roll += (Math.random() - 0.5) * 200;
+        telemetryState.pitch += (Math.random() - 0.5) * 200;
     }
 
+    // 자세 안정화 경향
     telemetryState.roll *= 0.99;
     telemetryState.pitch *= 0.99;
 
     const tiltAngle = Math.sqrt(telemetryState.roll**2 + telemetryState.pitch**2);
 
+    // 사출 조건 1: 기울기 70도 초과 (변경 없음)
     if (tiltAngle > 70 && telemetryState.ejection === 0) {
-        const message = `사출 명령 (1): ${tiltAngle.toFixed(2)}°`;
+        const message = `사출 명령 (자세): 기울기 ${tiltAngle.toFixed(2)}°`;
         console.log(`🚀 ${message}`);
         io.emit('serial-status-update', { status: 'error', message: message });
         telemetryState.ejection = 1;
@@ -107,15 +115,30 @@ if (isSimulateMode) {
       
       let baseAltitude = telemetryState.Alt;
 
-      if (baseAltitude > 350 && telemetryState.ejection === 0) {
-          const message = `사출 명령 (2): ${baseAltitude.toFixed(2)}m`;
-          console.log(`🚀 ${message}`);
-          io.emit('serial-status-update', { status: 'error', message: message });
-          telemetryState.ejection = 2;
+      // --- [개선] 새로운 고도 사출 로직 ---
+      altitudeBuffer.push(baseAltitude);
+      if(altitudeBuffer.length > 50) {
+          altitudeBuffer.shift();
       }
+      
+      if (altitudeBuffer.length === 50 && telemetryState.ejection === 0) {
+          const avg_alt = altitudeBuffer.reduce((a, b) => a + b, 0) / 50;
+          if (avg_alt > max_avg_alt) {
+              max_avg_alt = avg_alt;
+          }
 
-      if (telemetryState.flight_timestamp > 9 && telemetryState.ejection === 0) {
-          const message = `사출 명령 (3): ${telemetryState.flight_timestamp.toFixed(2)}초`;
+          if (max_avg_alt - avg_alt > 3) {
+              const message = `사출 명령 (고도): 최고 평균 ${max_avg_alt.toFixed(2)}m 대비 3m 이상 하강 감지`;
+              console.log(`🚀 ${message}`);
+              io.emit('serial-status-update', { status: 'error', message: message });
+              telemetryState.ejection = 2;
+          }
+      }
+      // --- 로직 끝 ---
+
+      // 사출 조건 3: 비행 시간 9초 초과 (변경 없음)
+      if (telemetryState.flight_timestamp >= 9 && telemetryState.ejection === 0) {
+          const message = `사출 명령 (시간): ${telemetryState.flight_timestamp.toFixed(2)}초`;
           console.log(`🚀 ${message}`);
           io.emit('serial-status-update', { status: 'error', message: message });
           telemetryState.ejection = 3;
@@ -154,7 +177,7 @@ if (isSimulateMode) {
     io.emit('serial-status-update', { status: 'info', message: `발사 시퀀스 시작. T-${(randomLaunchDelay / 1000).toFixed(2)}초` });
 
     launchDetectTimeout = setTimeout(() => {
-      io.emit('serial-status-update', { status: 'success', message: '발사 감지됨' });
+      io.emit('serial-status-update', { status: 'success', message: '발사 감지! 비행 타이머를 시작합니다.' });
       telemetryState.launch = 1;
       flightStartTime = Date.now();
       startSlowUpdater();
@@ -171,6 +194,8 @@ if (isSimulateMode) {
     slowUpdaterTimeout = null;
     flightStartTime = null;
     connectStartTime = null;
+    altitudeBuffer = [];
+    max_avg_alt = 0;
 
     telemetryState = { ...initialTelemetryState };
 
