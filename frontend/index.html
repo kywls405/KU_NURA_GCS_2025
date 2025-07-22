@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GCS Dashboard</title>
+  
+  <link rel="stylesheet" href="style.css" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+</head>
+<body>
+  <div class="gcs-container">
+    <!-- [핵심 수정] 오버레이를 gcs-container 안으로 이동 -->
+    <div id="ejected-overlay" class="hidden">!!EJECTED!!</div>
+
+    <header class="page-header">
+      <div class="logo-group">
+        <img src="assets/CommunicationMark_Eng.png" alt="Konkuk University Logo" class="logo" />
+        <img src="assets/Asec_Symbol.png" alt="ASEC Logo" class="logo" />
+      </div>
+
+      <div class="header-right-panel">
+        <div class="timers-group">
+          <div class="mission-timer">
+            <span class="label">TIME</span>
+            <span class="value telemetry-font" id="time">00:00:00</span>
+          </div>
+          <div class="mission-timer">
+            <div class="label-with-status">
+              <span class="status-indicator" id="connection-status"></span> 
+              <span class="label">CONNECTED TIME</span>
+            </div>
+            <span class="value telemetry-font" id="connected-time">00:00:00</span>
+          </div>
+          <div class="mission-timer">
+            <span class="label">FLIGHT TIME</span>
+            <span class="value telemetry-font" id="flight-time">T+ 00:00:00</span>
+          </div>
+        </div>
+
+        <div class="connection-control-panel">
+          <div class="control-group">
+            <label for="port-select" class="control-label">PORT</label>
+            <div class="port-selector-group">
+              <select id="port-select" class="port-select-dropdown"></select>
+              <button id="refresh-ports-btn" class="btn-icon">🔄</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <label for="baud-input" class="control-label">BAUD</label>
+            <input type="text" id="baud-input" value="9600" placeholder="예: 9600">
+          </div>
+          <div class="control-group button-group">
+            <button id="connect-btn" class="btn btn-primary">연결</button>
+            <button id="disconnect-btn" class="btn btn-secondary">종료</button>
+          </div>
+          <div id="status-display" class="status-error">연결되지 않음</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="separator"></div>
+
+    <main class="dashboard-grid">
+      <section class="widget status-widget">
+        <h2 class="widget-header">
+          <div class="header-status-indicator">
+            <span class="status-indicator" id="launch-status-indicator"></span>
+            <span>LAUNCH</span>
+          </div>
+          <span class="widget-title">Current Status</span>
+        </h2>
+        <div class="widget-content">
+          <div class="status-layout-grid">
+            <div class="attitude-main-panel">
+              <div class="navball">
+                <canvas id="navball-canvas" width="300" height="300"></canvas>
+              </div>
+              <div class="attitude-data">
+                <div class="data-item">
+                  <span class="label">Roll</span>
+                  <span class="value telemetry-font" id="roll">–</span>
+                </div>
+                <div class="data-item">
+                  <span class="label">Pitch</span>
+                  <span class="value telemetry-font" id="pitch">–</span>
+                </div>
+                <div class="data-item">
+                  <span class="label">Yaw</span>
+                  <span class="value telemetry-font" id="yaw">–</span>
+                </div>
+                </div>
+            </div>
+            <div class="systems-side-panel">
+              <div class="rocket-attitude-box">
+                <div class="box-header">
+                  <p class="label">Rocket Attitude</p>
+                  <p class="angle-value telemetry-font"><span id="angle-display">–</span></p>
+                </div>
+                <div class="rocket-attitude">
+                  <canvas id="rocket-icon" width="180" height="180"></canvas>
+                </div>
+              </div>
+              <div class="ejection-box">
+                <p class="label">Ejection</p>
+                <p class="value status-safe telemetry-font" id="ejection">SAFE</p>
+                <button class="Ejection-command-button">EJECT</button>
+              </div>
+              <div class="Carnard-Neutral-Set-box">
+                <p class="label">Carnard Neutral Set</p>
+                <button class="Carnard-command-button">SET</button>
+              </div>
+            </div>
+          </div>
+          <div class="status-telemetry">
+            <div class="telemetry-box">
+              <p class="label">Temperature</p>
+              <p class="value telemetry-font" id="temp">– °C</p>
+            </div>
+            <div class="telemetry-box">
+              <p class="label">Pressure</p>
+              <p class="value telemetry-font" id="pressure">– hPa</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="center-column">
+        <section class="widget altitude-widget">
+          <h2 class="widget-header">Altitude</h2>
+          <div class="widget-content">
+            <div class="altitude-chart-wrapper">
+              <canvas id="altitude-chart"></canvas>
+            </div>
+            <div class="altitude-data">
+              <div class="data-item">
+                <span class="label">P_Alt</span>
+                <span class="value telemetry-font" id="p_alt">– m</span>
+              </div>
+              <div class="data-item">
+                <span class="label">Alt</span>
+                <span class="value telemetry-font" id="alt">– m</span>
+              </div>
+            </div>
+            
+            <p class="max-altitude">
+              <span class="label">MAX Altitude</span> : 
+              <span class="desc telemetry-font" id="max_alt">– m</span>
+            </p>
+          </div>
+        </section>
+
+        <section class="widget acceleration-widget">
+          <h2 class="widget-header">Acceleration</h2>
+          <div class="widget-content">
+            <div class="acceleration-chart-wrapper">
+              <canvas id="acceleration-chart"></canvas>
+            </div>
+            <div class="acceleration-data">
+              <div class="data-item">
+                <span class="label">Ax</span>
+                <span class="value telemetry-font" id="ax">–</span>
+              </div>
+              <div class="data-item">
+                <span class="label">Ay</span>
+                <span class="value telemetry-font" id="ay">–</span>
+              </div>
+              <div class="data-item">
+                <span class="label">Az</span>
+                <span class="value telemetry-font" id="az">–</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="right-column">
+        <section class="widget position-widget">
+          <h2 class="widget-header">Current Position</h2>
+          <div class="widget-content">
+            <div class="position-data">
+              <div>
+                <p class="label">Longitude</p>
+                <p class="desc telemetry-font" id="lon">–</p>
+              </div>
+              <div>
+                <p class="label">Latitude</p>
+                <p class="desc telemetry-font" id="lat">–</p>
+              </div>
+
+              <div class="vertical-separator"></div>
+
+              <div class="velocity-item">
+                <p class="label">Vel-N</p>
+                <p class="value telemetry-font" id="vel_n">–</p>
+              </div>
+              <div class="velocity-item">
+                <p class="label">Vel-E</p>
+                <p class="value telemetry-font" id="vel_e">–</p>
+              </div>
+              <div class="velocity-item">
+                <p class="label">Vel-D</p>
+                <p class="value telemetry-font" id="vel_d">–</p>
+              </div>
+            </div>
+            <div class="map-placeholder" id="map">MAP</div>
+          </div>
+        </section>
+        <section class="widget event-log-widget">
+          <h2 class="widget-header">Event Log</h2>
+          <div class="widget-content event-log-content" id="event-log">
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="./main.js"></script>
+
+  <script type="module" src="./navball.js"></script>
+  <script type="module" src="./map.js"></script>
+
+</body>
+</html>
