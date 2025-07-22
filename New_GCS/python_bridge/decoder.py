@@ -1,7 +1,6 @@
-# decoder.py
-import serial
 import struct
 import enum
+
 from data_struct import GpsData, ImuData
 
 HEADER1 = 0xAA
@@ -73,8 +72,8 @@ class Decoder:
         payload_offset = 8
 
         if self.msg_type == MsgID.IMU.value:
-            # acc(3h),gyro(3h),mag(3h),euler(3h),temp(H),press(I),P_alt(H),ejection(B),launch(B)
-            payload_fmt = "<12hHIHBB" # <-- 수정: B 하나 추가
+            # P_alt를 부호 없는 정수(H)로 변경
+            payload_fmt = "<12hHIHBB" 
             unpacked_data = struct.unpack_from(payload_fmt, self.buf, payload_offset)
 
             self.imuData.acc         = [x / 100.0 for x in unpacked_data[0:3]]
@@ -83,19 +82,26 @@ class Decoder:
             self.imuData.euler       = [x / 100.0 for x in unpacked_data[9:12]]
             self.imuData.temperature = unpacked_data[12] / 100.0
             self.imuData.pressure    = unpacked_data[13] / 100.0
-            self.imuData.P_alt       = unpacked_data[14] / 100.0
+            p_alt_val = unpacked_data[14] / 100.0
+            
+            # 고도 예외처리
+            self.imuData.P_alt = 0 if p_alt_val > 400 else p_alt_val
+
             self.imuData.ejection    = unpacked_data[15]
-            self.imuData.launch      = unpacked_data[16] # <-- 수정: launch 데이터 할당
+            self.imuData.launch      = unpacked_data[16]
             self.new_imu_update = True
 
         elif self.msg_type == MsgID.GPS.value:
-            # lon(I),lat(I),alt(I),vel(3h),fix(B)
-            payload_fmt = "<3I3hB" # <-- C++ 코드의 uint32_t alt에 맞게 'I'가 3개인 것 확인
+            payload_fmt = "<3I3hB"
             unpacked_data = struct.unpack_from(payload_fmt, self.buf, payload_offset)
             
             self.gpsData.lon = unpacked_data[0] / 1e7
             self.gpsData.lat = unpacked_data[1] / 1e7
-            self.gpsData.Alt = unpacked_data[2] / 100.0
+            alt_val = unpacked_data[2] / 100.0
+            
+            # 고도 예외처리
+            self.gpsData.Alt = 0 if alt_val > 400 else alt_val
+
             self.gpsData.velN = unpacked_data[3] / 100.0
             self.gpsData.velE = unpacked_data[4] / 100.0
             self.gpsData.velD = unpacked_data[5] / 100.0
@@ -104,8 +110,8 @@ class Decoder:
             self.new_gps_update = True
         
         elif self.msg_type == MsgID.IMU_GPS.value:
-            # IMU 부분 + GPS 부분 + ejection(B) + launch(B)
-            payload_fmt = "<12hHIH3I3hBB" # <-- BB 확인
+            # [핵심 수정] P_alt(H)와 누락되었던 fixType(B)을 모두 반영하여 "BBB"로 수정
+            payload_fmt = "<12hHIH3I3hBBB" 
             unpacked_data = struct.unpack_from(payload_fmt, self.buf, payload_offset)
             
             # IMU
@@ -115,12 +121,17 @@ class Decoder:
             self.imuData.euler       = [x / 100.0 for x in unpacked_data[9:12]]
             self.imuData.temperature = unpacked_data[12] / 100.0
             self.imuData.pressure    = unpacked_data[13] / 100.0
-            self.imuData.P_alt       = unpacked_data[14] / 100.0
+            p_alt_val = unpacked_data[14] / 100.0
+            
+            self.imuData.P_alt = 0 if p_alt_val > 400 else p_alt_val
             
             # GPS
             self.gpsData.lon = unpacked_data[15] / 1e7
             self.gpsData.lat = unpacked_data[16] / 1e7
-            self.gpsData.Alt = unpacked_data[17] / 100.0
+            alt_val = unpacked_data[17] / 100.0
+            
+            self.gpsData.Alt = 0 if alt_val > 400 else alt_val
+
             self.gpsData.velN = unpacked_data[18] / 100.0
             self.gpsData.velE = unpacked_data[19] / 100.0
             self.gpsData.velD = unpacked_data[20] / 100.0
@@ -128,7 +139,7 @@ class Decoder:
             
             # Ejection, Launch
             self.imuData.ejection = unpacked_data[22]
-            self.imuData.launch   = unpacked_data[23] # <-- 수정: launch 데이터 할당
+            self.imuData.launch   = unpacked_data[23]
             
             self.new_imu_update = True
             self.new_gps_update = True
@@ -146,29 +157,3 @@ class Decoder:
     def get_imu_data(self):
         self.new_imu_update = False
         return self.imuData
-
-
-if __name__ == "__main__":
-    port = "COM11"
-    baudrate = 9600 # 실제 아두이노 보드레이트와 일치시켜야 합니다.
-
-    ser = serial.Serial(port, baudrate)
-    decoder = Decoder()
-
-    print("=== Main Start ===")
-    while True:
-        if ser.in_waiting > 0:
-            byte_read = ser.read(1)
-            if byte_read:
-                decoder.decode(int.from_bytes(byte_read, 'little'))
-
-        if decoder.is_gps_update():
-            gps = decoder.get_gps_data()
-            print(f"GPS | pos: {gps.lon:.2f}, {gps.lat:.2f}, {gps.Alt:.2f}", end="\t")
-            print(f"vel: {gps.velN:.2f}, {gps.velE:.2f}, {gps.velD:.2f}")
-
-        if decoder.is_imu_update():
-            imu = decoder.get_imu_data()
-            print(f"IMU | acc: {imu.acc[0]:.2f}, {imu.acc[1]:.2f}, {imu.acc[2]:.2f}", end="\t")
-            print(f"gyro: {imu.gyro[0]:.2f}, {imu.gyro[1]:.2f}, {imu.gyro[2]:.2f}", end="\t")
-            print(f"eject: {imu.ejection}, launch: {imu.launch}") # <-- 수정: launch 상태 출력

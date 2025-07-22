@@ -3,7 +3,7 @@
 Chart.register(window.ChartZoom);
 
 let altitudeChart, accelerationChart;
-const MAX_DATA_POINTS = 500; // 차트에 최대 500개의 데이터를 보여줌 (값을 조금 늘렸습니다)
+const MAX_DATA_POINTS = 500; // 차트에 최대 500개의 데이터를 보여줌
 
 /**
  * 차트의 공통 설정을 생성하는 헬퍼 함수
@@ -19,7 +19,6 @@ function createChartOptions(xAxisLabel, yAxisLabel, yMin, yMax, yStepSize) {
           color: '#6B7280',
           stepSize: 1,
           callback: function(value) {
-            // 정수 값만 눈금에 표시하여 소수점 눈금을 숨김
             if (Number.isInteger(value)) {
               return value;
             }
@@ -59,10 +58,10 @@ function createChartOptions(xAxisLabel, yAxisLabel, yMin, yMax, yStepSize) {
     animation: false,
     elements: {
         line: {
-            tension: 0.1 // 선을 약간 부드럽게
+            tension: 0.1
         },
         point: {
-            radius: 1.5 // 데이터 포인트를 작게 표시
+            radius: 1.5
         }
     }
   };
@@ -76,7 +75,7 @@ export function initCharts() {
   const altCtx = document.getElementById('altitude-chart').getContext('2d');
   
   if (altitudeChart) {
-    altitudeChart.destroy(); // 기존 차트가 있으면 파괴
+    altitudeChart.destroy();
   }
   altitudeChart = new Chart(altCtx, {
     type: 'line',
@@ -91,7 +90,7 @@ export function initCharts() {
   const accelCtx = document.getElementById('acceleration-chart').getContext('2d');
 
   if (accelerationChart) {
-    accelerationChart.destroy(); // 기존 차트가 있으면 파괴
+    accelerationChart.destroy();
   }
   accelerationChart = new Chart(accelCtx, {
     type: 'line',
@@ -109,9 +108,9 @@ export function initCharts() {
  */
 function addDataToChart(chart, flightTimestamp, data) {
   chart.data.datasets.forEach(dataset => {
-    // 키 이름 불일치 문제 해결 (accelData의 키는 'Ax'이지만 data에는 'ax'로 들어옴)
-    const key_map = { 'P_alt': 'P_alt', 'Alt': 'Alt', 'Ax': 'ax', 'Ay': 'ay', 'Az': 'az'};
-    const dataKey = key_map[dataset.label];
+    // 차트 데이터셋의 label과 실제 데이터 객체의 key를 매핑
+    const keyMap = { 'P_alt': 'P_alt', 'Alt': 'Alt', 'Ax': 'ax', 'Ay': 'ay', 'Az': 'az'};
+    const dataKey = keyMap[dataset.label];
     
     if (data.hasOwnProperty(dataKey)) {
       const value = parseFloat(data[dataKey]);
@@ -135,6 +134,7 @@ export function updateCharts(data) {
     return; // 조건 미충족 시 아무것도 그리지 않음
   }
 
+  // [핵심 수정] data.timestamp 대신 data.flight_timestamp 사용
   const flightTimestamp = data.flight_timestamp;
 
   // --- 데이터 추가 ---

@@ -9,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 
-const isSimulateMode = true; // (true 시뮬레이터, false 실제 하드웨어 연결)
+const isSimulateMode = false; // (true 시뮬레이터, false 실제 하드웨어 연결)
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,8 +64,8 @@ if (isSimulateMode) {
 
     if (Math.random() < 0.002) {
         console.log('💥 SIMULATING: High G-Force Event!');
-        telemetryState.roll += (Math.random() - 0.5) * 200;
-        telemetryState.pitch += (Math.random() - 0.5) * 200;
+        telemetryState.roll += (Math.random() - 0.5) * 100;
+        telemetryState.pitch += (Math.random() - 0.5) * 100;
     }
 
     telemetryState.roll *= 0.99;
@@ -107,14 +107,14 @@ if (isSimulateMode) {
       
       let baseAltitude = telemetryState.Alt;
 
-      if (baseAltitude > 400 && telemetryState.ejection === 0) {
+      if (baseAltitude > 350 && telemetryState.ejection === 0) {
           const message = `사출 명령 (2): ${baseAltitude.toFixed(2)}m`;
           console.log(`🚀 ${message}`);
           io.emit('serial-status-update', { status: 'error', message: message });
           telemetryState.ejection = 2;
       }
 
-      if (telemetryState.flight_timestamp > 60 && telemetryState.ejection === 0) {
+      if (telemetryState.flight_timestamp > 9 && telemetryState.ejection === 0) {
           const message = `사출 명령 (3): ${telemetryState.flight_timestamp.toFixed(2)}초`;
           console.log(`🚀 ${message}`);
           io.emit('serial-status-update', { status: 'error', message: message });
