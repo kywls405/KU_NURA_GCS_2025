@@ -1,6 +1,6 @@
 건국대학교 2025년 NURA GCS
 
-<img width="1919" height="968" alt="image" src="https://github.com/user-attachments/assets/2de16a44-8e63-4f94-bcd2-c1b9ae6ce64a" />
+<img width="1919" height="963" alt="image" src="https://github.com/user-attachments/assets/d36040cb-67c8-4107-a2e1-b2bd131cf04d" />
 
 [Running] node "c:\Users\yati0\OneDrive\Desktop\KU\ASEC\2025_NURA_GCS\backend\server.js"
 node:events:496
