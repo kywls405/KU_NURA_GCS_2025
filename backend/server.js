@@ -9,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 
-const isSimulateMode = false; // (true 시뮬레이터, false 실제 하드웨어 연결)
+const isSimulateMode = true; // (true 시뮬레이터, false 실제 하드웨어 연결)
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,7 +84,7 @@ if (isSimulateMode) {
     if (tiltAngle > 70 && telemetryState.ejection === 0) {
         const message = `사출 명령 (자세): 기울기 ${tiltAngle.toFixed(2)}°`;
         console.log(`🚀 ${message}`);
-        io.emit('serial-status-update', { status: 'error', message: message });
+        io.emit('serial-status-update', { status: 'success', message: message });
         telemetryState.ejection = 1;
     }
   }
@@ -134,7 +134,7 @@ if (isSimulateMode) {
           if (max_avg_alt - avg_alt > 3) {
               const message = `사출 명령 (고도): 최고 평균 ${max_avg_alt.toFixed(2)}m 대비 3m 이상 하강 감지`;
               console.log(`🚀 ${message}`);
-              io.emit('serial-status-update', { status: 'error', message: message });
+              io.emit('serial-status-update', { status: 'success', message: message });
               telemetryState.ejection = 2;
           }
       }
@@ -144,7 +144,7 @@ if (isSimulateMode) {
       if (telemetryState.flight_timestamp >= 9 && telemetryState.ejection === 0) {
           const message = `사출 명령 (시간): ${telemetryState.flight_timestamp.toFixed(2)}초`;
           console.log(`🚀 ${message}`);
-          io.emit('serial-status-update', { status: 'error', message: message });
+          io.emit('serial-status-update', { status: 'success', message: message });
           telemetryState.ejection = 3;
       }
       
@@ -203,7 +203,7 @@ if (isSimulateMode) {
 
     telemetryState = { ...initialTelemetryState };
 
-    io.emit('serial-status-update', { status: 'error', message: '시뮬레이션이 중지 및 초기화되었습니다.' });
+    io.emit('serial-status-update', { status: 'system', message: '시뮬레이션이 중지 및 초기화되었습니다.' });
     console.log('✅ Simulation stopped and states reset.');
   }
 }

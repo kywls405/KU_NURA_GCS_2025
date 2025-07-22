@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('serial-status-update', (data) => {
     updateSerialStatus(data.status, data.message);
     const isConnectionLog = /연결|종료|중지/.test(data.message);
-    // addLogMessage(data.message, data.status, isConnectionLog);
+    addLogMessage(data.message, data.status, isConnectionLog);
   });
   
   socket.on('serial-ports-list', (ports) => {
