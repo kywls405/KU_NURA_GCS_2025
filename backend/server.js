@@ -1,5 +1,3 @@
-// backend/server.js
-
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -8,8 +6,8 @@ import net from 'net';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
-
-const isSimulateMode = false; // (true 시뮬레이터, false 실제 하드웨어 연결)
+import fs from 'fs';
+import csv from 'csv-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,10 +23,112 @@ app.use(express.static(frontendPath));
 
 let pythonProcess = null;
 
+let csvReplayTimeout = null; 
+const CSV_FILE_PATH = path.join(__dirname, 'output_014.csv');
+
+const startCsvReplay = (io) => {
+  if (!fs.existsSync(CSV_FILE_PATH)) {
+    const errorMessage = `오류: CSV 파일을 찾을 수 없습니다. (${CSV_FILE_PATH})`;
+    console.error(`❌ ${errorMessage}`);
+    io.emit('serial-status-update', { status: 'error', message: errorMessage });
+    return;
+  }
+
+  const logData = [];
+  fs.createReadStream(CSV_FILE_PATH)
+    .pipe(csv({ skipLines: 4 }))
+    .on('data', (row) => logData.push(row))
+    .on('end', () => {
+      console.log('✅ CSV file successfully processed.');
+
+      // [수정] 컬럼명의 대소문자를 CSV 파일과 일치시킴 (row.Launch)
+      const launchIndex = logData.findIndex(row => parseInt(row.Launch, 10) === 1);
+
+      if (launchIndex === -1) {
+        const errorMessage = `오류: 로그 파일에서 발사(Launch=1) 지점을 찾을 수 없습니다.`;
+        console.error(`❌ ${errorMessage}`);
+        io.emit('serial-status-update', { status: 'error', message: errorMessage });
+        return;
+      }
+      
+      console.log(`🚀 Launch event found at index ${launchIndex}. Starting replay...`);
+      io.emit('serial-status-update', { status: 'success', message: `로그 파일에서 발사 감지! 재생을 시작합니다.` });
+
+      let currentIndex = launchIndex;
+
+      const replayStep = () => {
+        if (currentIndex >= logData.length) {
+          console.log('🏁 CSV replay finished.');
+          io.emit('serial-status-update', { status: 'success', message: '로그 파일 재생이 완료되었습니다.' });
+          return;
+        }
+
+        const currentRow = logData[currentIndex];
+        
+        // [수정] packet의 모든 키를 CSV 파일의 대소문자에 맞게 수정
+        const packet = {
+          roll: parseFloat(currentRow.Roll) || 0,
+          pitch: parseFloat(currentRow.Pitch) || 0,
+          yaw: parseFloat(currentRow.Yaw) || 0,
+          Alt: parseFloat(currentRow.Alt) || 0,
+          ax: parseFloat(currentRow.ax) || 0,
+          ay: parseFloat(currentRow.ay) || 0,
+          az: parseFloat(currentRow.az) || 0,
+          lat: parseFloat(currentRow.Lat) || 0,
+          lon: parseFloat(currentRow.Lon) || 0,
+          ejection: parseInt(currentRow.Chute, 10) || 0, // 'ejection'에 해당하는 'Chute' 컬럼 사용
+          launch: parseInt(currentRow.Launch, 10) || 0,
+          flight_timestamp: (parseInt(currentRow.TimeStamp, 10) - parseInt(logData[launchIndex].TimeStamp, 10)) / 1000,
+          
+          P_alt: parseFloat(currentRow.P_alt) || 0,
+          vel_n: parseFloat(currentRow.VN) || 0,
+          vel_e: parseFloat(currentRow.VE) || 0,
+          vel_d: parseFloat(currentRow.VD) || 0,
+          temp: parseFloat(currentRow.T) || 0,
+          pressure: parseFloat(currentRow.P) || 0,
+          connect_timestamp: 0 
+        };
+
+        io.emit('rocketData', packet);
+
+        const nextRow = logData[currentIndex + 1];
+        if (nextRow) {
+          const currentTimestamp = parseInt(currentRow.TimeStamp, 10);
+          const nextTimestamp = parseInt(nextRow.TimeStamp, 10);
+          const delay = nextTimestamp - currentTimestamp;
+
+          currentIndex++;
+          if (delay > 0) {
+            csvReplayTimeout = setTimeout(replayStep, delay);
+          } else {
+            replayStep();
+          }
+        } else {
+          currentIndex++;
+          replayStep();
+        }
+      };
+
+      replayStep();
+    });
+};
+
+const stopCsvReplay = () => {
+  if (csvReplayTimeout) {
+    clearTimeout(csvReplayTimeout);
+    csvReplayTimeout = null;
+    io.emit('serial-status-update', { status: 'system', message: 'CSV 재생이 중지되었습니다.' });
+    console.log('⏹️ CSV replay stopped.');
+  }
+};
+
+
+// --- 기존 시뮬레이터 및 소켓/TCP 서버 코드 (변경 없음) ---
+// ... (이하 코드는 이전 답변과 동일합니다) ...
 let startSimulator = (io) => { console.error("Simulator is not initialized."); };
 let stopSimulator = () => { console.error("Simulator is not initialized."); };
 
-if (isSimulateMode) {
+if (true) {
   let telemetryState = {};
   const initialTelemetryState = {
     flight_timestamp: 0, connect_timestamp: 0,
@@ -51,36 +151,31 @@ if (isSimulateMode) {
   let slowUpdaterTimeout = null;
   let launchDetectTimeout = null;
   
-  // [추가] 새로운 고도 사출 로직을 위한 변수
   let altitudeBuffer = [];
   let max_avg_alt = 0;
 
   function updateAttitudeAndCheckEjection() {
-    if (!flightStartTime) { // 발사 전에는 안정적으로 유지
+    if (!flightStartTime) {
         telemetryState.roll *= 0.95;
         telemetryState.pitch *= 0.95;
         return;
     }
     
-    // 자연스러운 흔들림 추가
     telemetryState.roll += (Math.random() - 0.5) * 0.5;
     telemetryState.pitch += (Math.random() - 0.5) * 0.5;
     telemetryState.yaw = (telemetryState.yaw + simulatorDirection.yaw * 0.1 + 360) % 360;
 
-    // 낮은 확률로 큰 충격 발생
     if (Math.random() < 0.002) {
         console.log('💥 SIMULATING: High G-Force Event!');
         telemetryState.roll += (Math.random() - 0.5) * 200;
         telemetryState.pitch += (Math.random() - 0.5) * 200;
     }
 
-    // 자세 안정화 경향
     telemetryState.roll *= 0.99;
     telemetryState.pitch *= 0.99;
 
     const tiltAngle = Math.sqrt(telemetryState.roll**2 + telemetryState.pitch**2);
 
-    // 사출 조건 1: 기울기 70도 초과 (변경 없음)
     if (tiltAngle > 70 && telemetryState.ejection === 0) {
         const message = `사출 명령 (자세): 기울기 ${tiltAngle.toFixed(2)}°`;
         console.log(`🚀 ${message}`);
@@ -119,7 +214,6 @@ if (isSimulateMode) {
       
       let baseAltitude = telemetryState.Alt;
 
-      // --- [개선] 새로운 고도 사출 로직 ---
       altitudeBuffer.push(baseAltitude);
       if(altitudeBuffer.length > 50) {
           altitudeBuffer.shift();
@@ -138,9 +232,7 @@ if (isSimulateMode) {
               telemetryState.ejection = 2;
           }
       }
-      // --- 로직 끝 ---
 
-      // 사출 조건 3: 비행 시간 9초 초과 (변경 없음)
       if (telemetryState.flight_timestamp >= 9 && telemetryState.ejection === 0) {
           const message = `사출 명령 (시간): ${telemetryState.flight_timestamp.toFixed(2)}초`;
           console.log(`🚀 ${message}`);
@@ -208,20 +300,29 @@ if (isSimulateMode) {
   }
 }
 
-// --- Socket.IO 연결 관리 ---
 io.on('connection', socket => {
   console.log('🌐 Web client connected');
   
   socket.on('connect-serial', (config) => {
-    if (isSimulateMode) {
-      stopSimulator();
+    stopSimulator();
+    stopCsvReplay();
+    if (pythonProcess) {
+      pythonProcess.kill();
+      pythonProcess = null;
+    }
+
+    if (config.port === 'SIMULATOR') {
+      console.log('🚀 Starting Simulator Mode...');
       startSimulator(io);
       return;
     }
 
-    if (pythonProcess) {
-      pythonProcess.kill();
+    if (config.port === 'CSV_REPLAY') {
+      console.log('🎬 Starting CSV Replay Mode...');
+      startCsvReplay(io);
+      return;
     }
+
     console.log(`🚀 Spawning python_bridge with config:`, config);
     pythonProcess = spawn('python', ['-u', '../python_bridge/decoder_main.py', '--port', config.port, '--baud', config.baud, '--host', '127.0.0.1', '--tcp_port', '9000']);
     pythonProcess.stdout.on('data', (data) => console.log(`[Python STDOUT]: ${data}`));
@@ -235,10 +336,8 @@ io.on('connection', socket => {
 
   socket.on('disconnect-serial', () => {
     console.log('🔪 Received disconnect-serial command.');
-    if (isSimulateMode) {
-      stopSimulator();
-      return;
-    }
+    stopSimulator();
+    stopCsvReplay();
     
     if (pythonProcess) {
       console.log('🔪 Killing python process.');
@@ -248,32 +347,30 @@ io.on('connection', socket => {
   });
 
   socket.on('request-serial-ports', () => {
-    if (isSimulateMode) {
-      const fakePorts = [{ device: 'SIMULATOR', description: 'GCS 내부 시뮬레이터' }];
-      socket.emit('serial-ports-list', fakePorts);
-      return;
-    }
     const portLister = spawn('python', ['../python_bridge/list_ports.py']);
     let portData = '';
     portLister.stdout.on('data', (data) => { portData += data.toString(); });
     portLister.stderr.on('data', (data) => { console.error(`[PortLister STDERR]: ${data}`); });
     portLister.on('close', (code) => {
+      let ports = [];
       if (code === 0) {
         try {
-          const ports = JSON.parse(portData);
-          socket.emit('serial-ports-list', ports);
+          ports = JSON.parse(portData);
         } catch (e) {
           console.error('Error parsing port list JSON:', e);
         }
       }
+      
+      ports.push({ device: 'SIMULATOR', description: 'GCS 내부 시뮬레이터' });
+      ports.push({ device: 'CSV_REPLAY', description: 'CSV 로그 파일 재생' });
+      socket.emit('serial-ports-list', ports);
     });
   });
 
   socket.on('disconnect', () => {
     console.log('🔌 Web client disconnected');
-    if (isSimulateMode) {
-        stopSimulator();
-    }
+    stopSimulator();
+    stopCsvReplay();
     if (pythonProcess) {
         pythonProcess.kill();
         pythonProcess = null;
@@ -281,7 +378,6 @@ io.on('connection', socket => {
   });
 });
 
-// --- Python 브릿지로부터 데이터를 수신하는 TCP 서버 ---
 const tcpServer = net.createServer(clientSocket => {
     console.log('🟢 Python bridge connected to TCP server');
     
