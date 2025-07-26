@@ -9,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 
-const isSimulateMode = true; // (true 시뮬레이터, false 실제 하드웨어 연결)
+const isSimulateMode = false; // (true 시뮬레이터, false 실제 하드웨어 연결)
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
