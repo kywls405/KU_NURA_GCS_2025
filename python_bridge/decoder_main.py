@@ -51,7 +51,6 @@ try:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((TCP_HOST, TCP_PORT))
     
-    # --- 💡 FIX 1: 연결 성공 시간을 기록 ---
     connection_start_time = time.time()
     
     print(f"🟢 Connected to Node.js backend at {TCP_HOST}:{TCP_PORT}")
@@ -84,6 +83,10 @@ try:
 
     decoder = Decoder()
     launch_packet_timestamp = None
+    
+    # --- 💡 1. 마지막으로 유효했던 GPS 데이터를 저장할 변수 초기화 ---
+    last_known_gps_data = GpsData() 
+    
     print("=== Decoder Main Start ===")
     
     while True:
@@ -102,7 +105,7 @@ try:
             decoder.decode(byte)
 
         if decoder.is_imu_update():
-            imu = copy.deepcopy(decoder.get_imu_data())  # ← launch 값 덮어쓰기 방지
+            imu = copy.deepcopy(decoder.get_imu_data())
             current_packet_timestamp = decoder.timestamp
 
             if imu.launch == 1 and launch_packet_timestamp is None:
@@ -112,28 +115,30 @@ try:
             if launch_packet_timestamp is not None:
                 relative_flight_timestamp = (current_packet_timestamp - launch_packet_timestamp) / 1000.0
             
-            gps = decoder.get_gps_data() if decoder.is_gps_update() else GpsData()
-
-            # --- 💡 FIX 2: 현재 시간과 연결 후 경과 시간을 계산 ---
+            # --- 💡 2. 새로운 GPS 데이터가 있을 때만 last_known_gps_data를 갱신 ---
+            if decoder.is_gps_update():
+                last_known_gps_data = decoder.get_gps_data()
+            
             current_time = time.time()
             connect_timestamp = current_time - connection_start_time
 
+            # --- 💡 3. TCP와 CSV 페이로드 생성 시 항상 last_known_gps_data를 사용 ---
             telemetry_payload_tcp = {
                 "flight_timestamp": relative_flight_timestamp,
-                "connect_timestamp": connect_timestamp, # 수정된 값 사용
+                "connect_timestamp": connect_timestamp,
                 "roll": imu.euler[0], "pitch": imu.euler[1], "yaw": imu.euler[2],
-                "P_alt": imu.P_alt, "Alt": gps.Alt,
+                "P_alt": imu.P_alt, "Alt": last_known_gps_data.Alt,
                 "ax": imu.acc[0], "ay": imu.acc[1], "az": imu.acc[2],
-                "lat": gps.lat, "lon": gps.lon,
+                "lat": last_known_gps_data.lat, "lon": last_known_gps_data.lon,
                 "temp": imu.temperature, "pressure": imu.pressure,
-                "vel_n": gps.velN, "vel_e": gps.velE, "vel_d": gps.velD,
+                "vel_n": last_known_gps_data.velN, "vel_e": last_known_gps_data.velE, "vel_d": last_known_gps_data.velD,
                 "ejection": imu.ejection,
                 "launch": imu.launch
             }
             
             telemetry_payload_csv = {
-                "local_timestamp": current_time, # 계산된 현재 시간 재사용
-                "connect_timestamp": connect_timestamp, # 수정된 값 사용
+                "local_timestamp": current_time,
+                "connect_timestamp": connect_timestamp,
                 "flight_timestamp": relative_flight_timestamp,
                 "raw_packet_timestamp": current_packet_timestamp,
                 "ax": imu.acc[0], "ay": imu.acc[1], "az": imu.acc[2],
@@ -142,9 +147,9 @@ try:
                 "roll": imu.euler[0], "pitch": imu.euler[1], "yaw": imu.euler[2],
                 "max_g": 0,
                 "temp": imu.temperature, "pressure": imu.pressure, "P_alt": imu.P_alt,
-                "lon": gps.lon, "lat": gps.lat, "Alt": gps.Alt,
-                "vel_n": gps.velN, "vel_e": gps.velE, "vel_d": gps.velD,
-                "fix_type": gps.fixType,
+                "lon": last_known_gps_data.lon, "lat": last_known_gps_data.lat, "Alt": last_known_gps_data.Alt,
+                "vel_n": last_known_gps_data.velN, "vel_e": last_known_gps_data.velE, "vel_d": last_known_gps_data.velD,
+                "fix_type": last_known_gps_data.fixType,
                 "ejection": imu.ejection,
                 "launch": imu.launch
             }

@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
     uiElements.p_alt.textContent     = `${Number(data.P_alt).toFixed(2)} m`;
     uiElements.alt.textContent       = `${Number(data.Alt).toFixed(2)} m`;
 
-    const altNum = Number(data.Alt);
+    const altNum = Number(data.P_alt);
     const isDescending = data.vel_d > 0;
 
     if (!isNaN(altNum) && altNum > maxAltitude) {

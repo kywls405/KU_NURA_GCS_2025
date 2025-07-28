@@ -73,6 +73,7 @@ class Decoder:
 
         if self.msg_type == MsgID.IMU.value:
             # P_alt를 부호 없는 정수(H)로 변경
+            print("IMU")
             payload_fmt = "<12hHIHBB" 
             unpacked_data = struct.unpack_from(payload_fmt, self.buf, payload_offset)
 
@@ -92,6 +93,7 @@ class Decoder:
             self.new_imu_update = True
 
         elif self.msg_type == MsgID.GPS.value:
+            print("GPS")
             payload_fmt = "<3I3hB"
             unpacked_data = struct.unpack_from(payload_fmt, self.buf, payload_offset)
             
@@ -111,6 +113,7 @@ class Decoder:
         
         elif self.msg_type == MsgID.IMU_GPS.value:
             # [핵심 수정] P_alt(H)와 누락되었던 fixType(B)을 모두 반영하여 "BBB"로 수정
+            print("IMU_GPS")
             payload_fmt = "<12hHIH3I3hBBB" 
             unpacked_data = struct.unpack_from(payload_fmt, self.buf, payload_offset)
             
